@@ -35,12 +35,12 @@
                 it under the terms of the SFL License Agreement as provided
                 in the file LICENSE.TXT.  This software is distributed in
                 the hope that it will be useful, but without any warranty.
- ------------------------------------------------------------------</Prolog>-*/
+ ------------------------------------------------------------------</Prolog>- */
 
-#ifndef _PRELUDE_INCLUDED                                  /*  Allow multiple inclusions        */
+#ifndef _PRELUDE_INCLUDED                                  /*  Allow multiple inclusions */
 #define _PRELUDE_INCLUDED
 
-/*- Establish the compiler and computer system ------------------------------*/
+/*- Establish the compiler and computer system ------------------------------ */
 /*
  *  Defines zero or more of these symbols, for use in any non-portable code:
  *
@@ -54,16 +54,16 @@
  *
  */
 
-#if (defined (__64BIT__))                                  /*  EDM 96/05/30                     */
-#define __IS_64BIT__                                       /*  May have 64-bit OS/compiler      */
+#if (defined (__64BIT__))                                  /*  EDM 96/05/30 */
+#define __IS_64BIT__                                       /*  May have 64-bit OS/compiler */
 #else
-#define __IS_32BIT__                                       /*  Else assume 32-bit OS/compiler   */
+#define __IS_32BIT__                                       /*  Else assume 32-bit OS/compiler */
 #endif
 
-/*  Try to define a __UTYPE_xxx symbol...                                    */
-/*  unix                SunOS at least                                       */
-/*  __unix__            gcc                                                  */
-/*  _POSIX_SOURCE is various UNIX systems, maybe also VAX/VMS                */
+/*  Try to define a __UTYPE_xxx symbol... */
+/*  unix                SunOS at least */
+/*  __unix__            gcc */
+/*  _POSIX_SOURCE is various UNIX systems, maybe also VAX/VMS */
 #if (defined (unix) || defined (__unix__) || defined (_POSIX_SOURCE))
 #if (!defined (__VMS__))
 #undef __UNIX__
@@ -80,10 +80,10 @@
 #define __UTYPE_GENERIC
 #endif
 
-/*- Standard ANSI include files ---------------------------------------------*/
+/*- Standard ANSI include files --------------------------------------------- */
 
-#ifdef __cplusplus                                         /*  PA 96/05/29                      */
-#include <iostream.h>                                      /*  A bit of support for C++         */
+#ifdef __cplusplus                                         /*  PA 96/05/29 */
+#include <iostream.h>                                      /*  A bit of support for C++ */
 #endif
 
 #include <ctype.h>
@@ -100,7 +100,7 @@
 #include <signal.h>
 #include <setjmp.h>
 
-/*- System-specific include files -------------------------------------------*/
+/*- System-specific include files ------------------------------------------- */
 
 #if (defined (__UNIX__))
 #include <fcntl.h>
@@ -122,34 +122,34 @@
 #include <arpa/inet.h>
 #endif
 
-/*- Data types --------------------------------------------------------------*/
+/*- Data types -------------------------------------------------------------- */
 
-typedef int Bool;                                          /*  Boolean TRUE/FALSE value         */
-typedef unsigned char byte;                                /*  Single unsigned byte = 8 bits    */
-typedef unsigned short dbyte;                              /*  Double byte = 16 bits            */
-typedef unsigned short word;                               /*  Alternative for double-byte      */
-typedef unsigned long dword;                               /*  Double word >= 32 bits           */
+typedef int Bool;                                          /*  Boolean TRUE/FALSE value */
+typedef unsigned char byte;                                /*  Single unsigned byte = 8 bits */
+typedef unsigned short dbyte;                              /*  Double byte = 16 bits */
+typedef unsigned short word;                               /*  Alternative for double-byte */
+typedef unsigned long dword;                               /*  Double word >= 32 bits */
 
 #if (defined (__IS_32BIT__))
-typedef unsigned long qbyte;                               /*  Quad byte = 32 bits              */
+typedef unsigned long qbyte;                               /*  Quad byte = 32 bits */
 #else
-typedef unsigned int qbyte;                                /*  Quad byte = 32 bits              */
+typedef unsigned int qbyte;                                /*  Quad byte = 32 bits */
 #endif
 
 typedef void (
     *function
 ) (
     void
-);                                                         /*  Address of simple function       */
+);                                                         /*  Address of simple function */
 
-#define local static void                                  /*  Shorthand for local functions    */
+#define local static void                                  /*  Shorthand for local functions */
 
-typedef struct {                                           /*  Memory descriptor                */
-    size_t size;                                           /*    Size of data part              */
-    byte *data;                                            /*    Data part follows here         */
+typedef struct {                                           /*  Memory descriptor */
+    size_t size;                                           /*    Size of data part */
+    byte *data;                                            /*    Data part follows here */
 } DESCR;
 
-/*- Check compiler data type sizes ------------------------------------------*/
+/*- Check compiler data type sizes ------------------------------------------ */
 
 #if (UCHAR_MAX != 0xFF)
 #error "Cannot compile: must change definition of 'byte'."
@@ -169,10 +169,7 @@ typedef struct {                                           /*  Memory descriptor
 #endif
 #endif
 
-/*- Pseudo-functions --------------------------------------------------------*/
-
-#define FOREVER         for (;;)                           /*  FOREVER { ... }              */
-#define until(expr)     while (!(expr))                    /*  do { ... } until (expr)      */
+/*- Pseudo-functions -------------------------------------------------------- */
 
 #define streq(s1,s2)    (!strcmp ((s1), (s2)))
 #define strneq(s1,s2)   (strcmp ((s1), (s2)))
@@ -210,10 +207,10 @@ typedef struct {                                           /*  Memory descriptor
 #define min(a,b)        (((a) < (b))? (a): (b))
 #define max(a,b)        (((a) > (b))? (a): (b))
 
-/*- ASSERT ------------------------------------------------------------------*/
+/*- ASSERT ------------------------------------------------------------------ */
 
 #if (defined (DEBUG))
-    /*  Define _Assert function here locally                                 */
+    /*  Define _Assert function here locally */
 local _Assert(
     char *File,
     unsigned Line
@@ -230,36 +227,36 @@ local _Assert(
 #define ASSERT(f)
 #endif
 
-/*- Boolean operators and constants -----------------------------------------*/
+/*- Boolean operators and constants ----------------------------------------- */
 
 #if (!defined (TRUE))
-#define TRUE        1                                      /*  ANSI standard                    */
+#define TRUE        1                                      /*  ANSI standard */
 #define FALSE       0
 #endif
 
-/*- Symbolic constants ------------------------------------------------------*/
+/*- Symbolic constants ------------------------------------------------------ */
 
-#define FORK_ERROR      -1                                 /*  Return codes from fork()         */
+#define FORK_ERROR      -1                                 /*  Return codes from fork() */
 #define FORK_CHILD      0
 
-#if (!defined (LINE_MAX))                                  /*  Length of line from text file    */
-#define LINE_MAX     255                                   /*    if not previously #define'd    */
+#if (!defined (LINE_MAX))                                  /*  Length of line from text file */
+#define LINE_MAX     255                                   /*    if not previously #define'd */
 #endif
 
-#if (!defined (PATH_MAX))                                  /*  Length of path variable          */
-#define PATH_MAX     2048                                  /*    if not previously #define'd    */
-#endif                                                     /*  EDM 96/05/28                     */
+#if (!defined (PATH_MAX))                                  /*  Length of path variable */
+#define PATH_MAX     2048                                  /*    if not previously #define'd */
+#endif                                                     /*  EDM 96/05/28 */
 
-#if (!defined (EXIT_SUCCESS))                              /*  ANSI, and should be in stdlib.h  */
-#define EXIT_SUCCESS 0                                     /*    but not defined on SunOs with  */
-#define EXIT_FAILURE 1                                     /*    GCC, sometimes.                */
+#if (!defined (EXIT_SUCCESS))                              /*  ANSI, and should be in stdlib.h */
+#define EXIT_SUCCESS 0                                     /*    but not defined on SunOs with */
+#define EXIT_FAILURE 1                                     /*    GCC, sometimes. */
 #endif
 
-/*- System-specific definitions ---------------------------------------------*/
+/*- System-specific definitions --------------------------------------------- */
 
 /*  We define the STARTUP macro: this performs any initialisation for the
  *  main function that is system-dependent.  In theory a portable main
- *  program should do this...                                                */
+ *  program should do this... */
 
 #if (defined (__MAC__))
 #define STARTUP         argc = ccommand (&argv);
@@ -268,20 +265,20 @@ local _Assert(
 #endif
 
 /*  UNIX defines sleep() in terms of second; Win32 defines Sleep() in
- *  terms of milliseconds.  We want to be able to use sleep() anywhere.      */
+ *  terms of milliseconds.  We want to be able to use sleep() anywhere. */
 
 #if (defined (__WINDOWS__))
 #if (defined (WIN32))
-#define sleep(a) Sleep(a*1000)                             /*  UNIX sleep() is seconds          */
+#define sleep(a) Sleep(a*1000)                             /*  UNIX sleep() is seconds */
 #else
-#define sleep(a)                                           /*  Do nothing?                      */
+#define sleep(a)                                           /*  Do nothing? */
 #endif
 #endif
 
 /*  We define constants for the way the current system formats filenames;
- *  we assume that the system has some type of path concept.                 */
+ *  we assume that the system has some type of path concept. */
 
-#if (defined (__UNIX__))                                   /*  All UNIXes                       */
+#if (defined (__UNIX__))                                   /*  All UNIXes */
 #define PATHSEP      ":"
 #define PATHEND      '/'
 #define PATHFOLD     FALSE
@@ -291,7 +288,7 @@ local _Assert(
 #error "No definitions for PATH constants"
 #endif
 
-/*- Capability definitions --------------------------------------------------*/
+/*- Capability definitions -------------------------------------------------- */
 /*
  *  Defines zero or more of these symbols, for use in any non-portable
  *  code:
@@ -302,30 +299,30 @@ local _Assert(
  */
 
 #if (defined (AF_INET))
-#define DOES_SOCKETS                                       /*  System supports BSD sockets      */
+#define DOES_SOCKETS                                       /*  System supports BSD sockets */
 #else
 #undef  DOES_SOCKETS
-#define ntohs(x)     (x)                                   /*  Needs to be correct for the      */
-#define ntohl(x)     (x)                                   /*    platform as far as possible    */
+#define ntohs(x)     (x)                                   /*  Needs to be correct for the */
+#define ntohl(x)     (x)                                   /*    platform as far as possible */
 #define htons(x)     (x)
 #define htonl(x)     (x)
 #endif
 
 #if (defined (__UNIX__) || defined (__VMS__) || defined (__OS2__))
-#define DOES_UID                                           /*  System supports uid functions    */
+#define DOES_UID                                           /*  System supports uid functions */
 #else
 #undef  DOES_UID
-typedef int gid_t;                                         /*  Group id type                    */
-typedef int uid_t;                                         /*  User id type                     */
+typedef int gid_t;                                         /*  Group id type */
+typedef int uid_t;                                         /*  User id type */
 #endif
 
 #if (defined (ITIMER_REAL))
-#define DOES_TIMERS                                        /*  Supports BSD setitimer calls     */
+#define DOES_TIMERS                                        /*  Supports BSD setitimer calls */
 #else
 #undef  DOES_TIMERS
-#if (!defined (SIGALRM))                                   /*  We can use SIGALRM in code       */
-#define SIGALRM  1                                         /*    though it may never happen     */
+#if (!defined (SIGALRM))                                   /*  We can use SIGALRM in code */
+#define SIGALRM  1                                         /*    though it may never happen */
 #endif
 #endif
 
-#endif                                                     /*  Include PRELUDE.H                */
+#endif                                                     /*  Include PRELUDE.H */

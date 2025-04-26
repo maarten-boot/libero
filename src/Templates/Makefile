@@ -5,7 +5,7 @@ FILES := lr.c lrcalc.c lrcode.c lrdump.c lreval.c lrfree.c lrglib.c lrlibr.c lrl
 all: clean indent lr
 
 indent:
-	indent *.h
+	indent  lr.c lrcalc.c lrcode.c lrdump.c lreval.c lrfree.c  lrlibr.c lrload.c lroptn.c lrsort.c lrsymb.c *.h
 	indent *.c
 
 tidy:

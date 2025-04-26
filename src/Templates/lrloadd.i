@@ -33,7 +33,7 @@
         exception_raised        = FALSE;
         _LR_vecptr = _LR_vector [_LR_index];
 
-        for(;;)
+        FOREVER
           {
             if ((*_LR_vecptr == _LR_STOP)
             || (exception_raised))

@@ -20,12 +20,11 @@
  *  You should have received a copy of the GNU General Public License        *
  *  along with this program; if not, write to the Free Software              *
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.                *
- *===========================================================================*/
+ *=========================================================================== */
 
-#include "prelude.h"                                       /*  Public definitions               */
-#include "lrpriv.h"                                        /*  Private definitions              */
-
-#include "lrloadd.d"                                       /*  Include dialog data              */
+#include "prelude.h"                                       /*  Public definitions */
+#include "lrpriv.h"                                        /*  Private definitions */
+#include "lrloadd.d"                                       /*  Include dialog data */
 
 /*-----------------------------.
  |  lr_load_dialog             |
@@ -63,63 +62,63 @@
  |  is initially set to zero, and name is a null-terminated string holding   |
  |  the name of the state, event, or module.  The table is initially set to  |
  |  all zeroes; an entry followed by zero indicates the end of the table.    |
- `---------------------------------------------------------------------------*/
+ `--------------------------------------------------------------------------- */
 
-/*  Global variables used in this source file only                           */
+/*  Global variables used in this source file only */
 
 static int
- feedback,                                                 /*  Size of dialog in nodes          */
- event_number,                                             /*  Number for event                 */
- char_nbr,                                                 /*  Current read position in line    */
- line_nbr;                                                 /*  Input line nbr from file         */
+ feedback,                                                 /*  Size of dialog in nodes */
+ event_number,                                             /*  Number for event */
+ char_nbr,                                                 /*  Current read position in line */
+ line_nbr;                                                 /*  Input line nbr from file */
 
 static char
-*filename,                                                 /*  Name of dialog file              */
- token[LINE_MAX + 1],                                      /*  Token from input stream          */
- expect[LINE_MAX + 1],                                     /*  Expected token or definition     */
- srcline[LINE_MAX + 1],                                    /*  Current source line              */
- pretty_line[LINE_MAX + 1],                                /*  Output source line               */
- pretty_file[LR_FILENAMEMAX + 1],                          /*  Prettified file name             */
- fullname[LR_FILENAMEMAX + 1],                             /*  Dialog file with ext. & path     */
-*statename,                                                /*  Logical name of current state    */
-*maxname;                                                  /*  Pointer to end of symbol table   */
+*filename,                                                 /*  Name of dialog file */
+ token[LINE_MAX + 1],                                      /*  Token from input stream */
+ expect[LINE_MAX + 1],                                     /*  Expected token or definition */
+ srcline[LINE_MAX + 1],                                    /*  Current source line */
+ pretty_line[LINE_MAX + 1],                                /*  Output source line */
+ pretty_file[LR_FILENAMEMAX + 1],                          /*  Prettified file name */
+ fullname[LR_FILENAMEMAX + 1],                             /*  Dialog file with ext. & path */
+*statename,                                                /*  Logical name of current state */
+*maxname;                                                  /*  Pointer to end of symbol table */
 
-static lrstat *stats;                                      /*  Pointer to stats block           */
+static lrstat *stats;                                      /*  Pointer to stats block */
 
-static lrnode *listhead,                                   /*  Head of dialog list structure    */
-*last_state,                                               /*  Pointer to last state node       */
-*cur_state,                                                /*  Pointer to this state node       */
-*cur_event,                                                /*  Pointer to this event node       */
-*cur_module;                                               /*  Pointer to this module node      */
+static lrnode *listhead,                                   /*  Head of dialog list structure */
+*last_state,                                               /*  Pointer to last state node */
+*cur_state,                                                /*  Pointer to this state node */
+*cur_event,                                                /*  Pointer to this event node */
+*cur_module;                                               /*  Pointer to this module node */
 
-static FILE *input,                                        /*  Input file stream                */
-*pretty;                                                   /*  Pretty-printed output            */
+static FILE *input,                                        /*  Input file stream */
+*pretty;                                                   /*  Pretty-printed output */
 
-#define SS_OPEN             0                              /*  Flags for superstate refs        */
+#define SS_OPEN             0                              /*  Flags for superstate refs */
 #define SS_BUSY             1
 #define SS_DONE             2
-typedef struct SS_REF_tag {                                /*  Superstate reference list        */
+typedef struct SS_REF_tag {                                /*  Superstate reference list */
     struct SS_REF_tag
-    *next;                                                 /*  Next superstate reference        */
-    lrnode *state;                                         /*  Pointer to state node            */
-    char *ssname;                                          /*  Name of superstate               */
-    byte flag;                                             /*  Processing flag                  */
+    *next;                                                 /*  Next superstate reference */
+    lrnode *state;                                         /*  Pointer to state node */
+    char *ssname;                                          /*  Name of superstate */
+    byte flag;                                             /*  Processing flag */
 } SS_REF;
 
-static SS_REF *ss_head,                                    /*  Reference list head              */
-*ss_tail;                                                  /*    and tail                       */
+static SS_REF *ss_head,                                    /*  Reference list head */
+*ss_tail;                                                  /*    and tail */
 
-/*  Character classification tables and macros                               */
+/*  Character classification tables and macros */
 
-static byte cmap[256];                                     /*  Character classification tables  */
+static byte cmap[256];                                     /*  Character classification tables */
 
-#define CMAP_VALID       1                                 /*  Normal name token                */
-#define CMAP_QUOTE       2                                 /*  Possible string delimiters       */
-                                        /*  Macros for character mapping:    */
+#define CMAP_VALID       1                                 /*  Normal name token */
+#define CMAP_QUOTE       2                                 /*  Possible string delimiters */
+                                        /*  Macros for character mapping: */
 #define is_valid(ch)     ((byte) (cmap [(byte) (ch)] & CMAP_VALID) > 0)
 #define is_quote(ch)     ((byte) (cmap [(byte) (ch)] & CMAP_QUOTE) > 0)
 
-/*  Function prototypes                                                      */
+/*  Function prototypes */
 
 static void init_charmaps(
     void
@@ -165,35 +164,35 @@ int lr_load_dialog(
     char *p_filename
 )
 {
-    feedback = 0;                                          /*  Reset return feedback            */
-    filename = p_filename;                                 /*  Copy addresses of parameters     */
+    feedback = 0;                                          /*  Reset return feedback */
+    filename = p_filename;                                 /*  Copy addresses of parameters */
     stats = p_stats;
     listhead = p_listhead;
 
-#include "lrloadd.i"                                       /*  Execute dialog manager           */
+#include "lrloadd.i"                                       /*  Execute dialog manager */
 }
 
-/*************************   INITIALISE THE PROGRAM   ************************/
+/*************************   INITIALISE THE PROGRAM   *********************** */
 
 MODULE initialise_the_program(
     void
 )
 {
-    listhead->next =                                       /*  Set list head pointers to null   */
-        listhead->child = last_state = NULL;               /*  Set other pointers to null       */
+    /*  Set list head pointers to null */
+    listhead->next = listhead->child = last_state = NULL;  /*  Set other pointers to null */
 
-    line_nbr = 0;                                          /*  Nothing read from file yet       */
+    line_nbr = 0;                                          /*  Nothing read from file yet */
 
-    /*  Allocate symbol table from memory                                    */
+    /*  Allocate symbol table from memory */
     listhead->name = (char *) Check(calloc(LR_SYMBOLMAX, sizeof(char)));
     maxname = listhead->name + LR_SYMBOLMAX;
 
-    /*  Initialise superstate structures                                     */
+    /*  Initialise superstate structures */
     ss_head = (SS_REF *) Check(malloc(sizeof(SS_REF)));
     ss_tail = ss_head;
     ss_head->next = NULL;
 
-    init_charmaps();                                       /*  Initialise character maps        */
+    init_charmaps();                                       /*  Initialise character maps */
 
     the_next_event = ok_event;
 }
@@ -209,9 +208,9 @@ static void init_charmaps(
     void
 )
 {
-    memset(cmap, 0, sizeof(cmap));                         /*  Clear all bitmaps                */
+    memset(cmap, 0, sizeof(cmap));                         /*  Clear all bitmaps */
 
-    /*  Map fixed character sets to various bitmaps                          */
+    /*  Map fixed character sets to various bitmaps */
     build_charmap(CMAP_VALID, "abcdefghijklmnopqrstuvwxyz");
     build_charmap(CMAP_VALID, "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
     build_charmap(CMAP_VALID, "0123456789");
@@ -236,16 +235,16 @@ static void build_charmap(
     }
 }
 
-/***************************   OPEN DIALOG FILE   ****************************/
+/***************************   OPEN DIALOG FILE   *************************** */
 
 MODULE open_dialog_file(
     void
 )
 {
     char
-    *located;                                              /*  Filename on dpath                */
+    *located;                                              /*  Filename on dpath */
 
-    /*  Look for dialog file on -dpath or -path unless fully specified       */
+    /*  Look for dialog file on -dpath or -path unless fully specified */
     if (strchr(filename, PATHEND)) {
         strcpy(fullname, filename);
     } else {
@@ -257,7 +256,7 @@ MODULE open_dialog_file(
         }
     }
 
-    FileCrLf = FALSE;                                      /*  Reset file CRLF state            */
+    FileCrLf = FALSE;                                      /*  Reset file CRLF state */
     input = FileOpen(fullname, 'r');
 
     if (input == NULL) {
@@ -265,7 +264,7 @@ MODULE open_dialog_file(
         raise_exception(error_event);
     }
 
-    char_nbr = 0;                                          /*  Clear input line                 */
+    char_nbr = 0;                                          /*  Clear input line */
     srcline[0] = 0;
 
     sprintf(pretty_file, "lr%ld.tmp", time(NULL));         // you are creating a netm file based on datetime probably
@@ -277,40 +276,40 @@ MODULE open_dialog_file(
     }
 }
 
-/****************************   GET NEXT TOKEN   *****************************/
+/****************************   GET NEXT TOKEN   **************************** */
 
 MODULE get_next_token(
     void
 )
 {
-    int size;                                              /*  Size of token                    */
-    char thisch;                                           /*  Next char in token               */
+    int size;                                              /*  Size of token */
+    char thisch;                                           /*  Next char in token */
     char first,
-     last;                                                 /*  Token first & last chars         */
+     last;                                                 /*  Token first & last chars */
 
-    FOREVER {
-        if (srcline[char_nbr] == 0) {                      /*  If we need input, read a line    */
+    for (;;) {
+        if (srcline[char_nbr] == 0) {                      /*  If we need input, read a line */
             if (FileRead(input, srcline)) {
                 char_nbr = 0;
                 line_nbr++;
             } else {
                 the_next_event = no_more_event;
-                return;                                    /*  If we hit end-of-file, end       */
+                return;                                    /*  If we hit end-of-file, end */
             }
         }
 
-        /*  Skip spaces before token                                         */
+        /*  Skip spaces before token */
         while (srcline[char_nbr] == ' ') {
             char_nbr++;
         }
 
         thisch = srcline[char_nbr];
 
-        if (thisch == 0) {                                 /*  If we need input, loop           */
+        if (thisch == 0) {                                 /*  If we need input, loop */
             continue;
         }
 
-        /*  If line is a Libero option or comment, collect complete line     */
+        /*  If line is a Libero option or comment, collect complete line */
         if (thisch == '/' || (thisch == '-' && srcline[char_nbr + 1] != '>') || thisch == '!') {
             strcpy(token, srcline + char_nbr);
             char_nbr = strlen(srcline);
@@ -323,9 +322,10 @@ MODULE get_next_token(
                 token[size++] = thisch;
             }
 
-            token[size] = 0;                               /*  Terminate token string           */
+            token[size] = 0;                               /*  Terminate token string */
             break;
         } else {
+
             token[0] = thisch;
             token[1] = 0;
             syntax_error(error_event, MSG_INVALID_TOKEN, token, expect);
@@ -345,9 +345,9 @@ MODULE get_next_token(
     } else if (streq(token, "+")) {
         the_next_event = module_flag_event;
     } else if (first == '/' || first == '-') {
-        the_next_event = option_event;                     /*  Option string                    */
+        the_next_event = option_event;                     /*  Option string */
     } else if (first == '<' && last == '>') {
-        StrClose(token, 0);                                /*  Get rid of < and >               */
+        StrClose(token, 0);                                /*  Get rid of < and > */
         strlast(token) = 0;
 
         if (ValidName(token)) {
@@ -377,25 +377,27 @@ local syntax_error(
     ...
 )
 {
-    static char error_text[LINE_MAX + 1];                  /*  Formatted error message          */
+    static char error_text[LINE_MAX + 1];                  /*  Formatted error message */
     static int prev_line = 0;
 
-    va_list argptr;                                        /*  Argument list pointer            */
+    va_list argptr;                                        /*  Argument list pointer */
 
     if (line_nbr != prev_line) {
         fprintf(stderr, "%s %d: %s\n", filename, line_nbr, srcline);
         prev_line = line_nbr;
     }
-    va_start(argptr, msgid);                               /*  Start variable arguments list    */
+
+    va_start(argptr, msgid);                               /*  Start variable arguments list */
     vsprintf(error_text, MessageText(msgid), argptr);
-    va_end(argptr);                                        /*  End variable arguments list      */
+    va_end(argptr);                                        /*  End variable arguments list */
 
     fprintf(stderr, "%s\n", error_text);
-    if (exception)                                         /*  Raise exception if error also    */
+    if (exception) {                                       /*  Raise exception if error also */
         raise_exception(exception);
+    }
 }
 
-/*************************   WARNING ON STATE NAME   *************************/
+/*************************   WARNING ON STATE NAME   ************************ */
 
 MODULE warning_on_state_name(
     void
@@ -404,35 +406,37 @@ MODULE warning_on_state_name(
     syntax_error(0, MSG_BAD_STATE_NAME, token);
 }
 
-/*************************   PROCESS COMMENT VALUE   *************************/
+/*************************   PROCESS COMMENT VALUE   ************************ */
 
 MODULE process_comment_value(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
-    if (pretty)
+    /*  Pretty-print if necessary */
+    if (pretty) {
         FileWrite(pretty, token);
+    }
 }
 
-/**************************   PROCESS OPTION VALUE   *************************/
+/**************************   PROCESS OPTION VALUE   ************************ */
 
 MODULE process_option_value(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
-    if (pretty)
+    /*  Pretty-print if necessary */
+    if (pretty) {
         FileWrite(pretty, token);
+    }
 }
 
-/***************************   ATTACH NEW STATE   ****************************/
+/***************************   ATTACH NEW STATE   *************************** */
 
 MODULE attach_new_state(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
+    /*  Pretty-print if necessary */
     if (pretty) {
         FileWrite(pretty, "");
         sprintf(pretty_line, "%s:", token);
@@ -467,7 +471,7 @@ MODULE attach_new_state(
  |                                                                           |
  |  Returns: a pointer to the newly-create node, or null if some error such  |
  |  as insufficient memory occurred.  'parent' can never be null.            |
- `---------------------------------------------------------------------------*/
+ `--------------------------------------------------------------------------- */
 
 static lrnode *alloc_node(
     char type,
@@ -478,18 +482,20 @@ static lrnode *alloc_node(
     lrnode *newnode;
 
     ASSERT(parent != NULL);
+
     newnode = (lrnode *) Check(malloc(sizeof(lrnode)));
-    feedback++;                                            /*  Add 1 to returned dialog size    */
-    newnode->child = NULL;                                 /*  Set node pointers to NULL        */
+    feedback++;                                            /*  Add 1 to returned dialog size */
+    newnode->child = NULL;                                 /*  Set node pointers to NULL */
     newnode->next = NULL;
-    newnode->type = type;                                  /*  Set node type                    */
+    newnode->type = type;                                  /*  Set node type */
     newnode->name = resolve_symbol(CleanName(token), type);
 
-    if (sibling)                                           /*  Attach to parent or sibling      */
+    /*  Attach to parent or sibling */
+    if (sibling) {
         sibling->next = newnode;
-    else
+    } else {
         parent->child = newnode;
-
+    }
     return (newnode);
 }
 
@@ -505,49 +511,55 @@ static lrnode *alloc_node(
  |                                                                           |
  |  Returns: a pointer to the newly-established name, or null if the symbol  |
  |  table is full.                                                           |
- `---------------------------------------------------------------------------*/
+ `--------------------------------------------------------------------------- */
 
 static char *resolve_symbol(
     char *name,
     char type
 )
 {
-    char *typeptr,                                         /*  Pointer to symbol type           */
-    *nameptr,                                              /*  Pointer to symbol name           */
-     typechr;                                              /*  Last type examined in table      */
-    byte *numbptr;                                         /*  Pointer to symbol number         */
+    char *typeptr,                                         /*  Pointer to symbol type */
+    *nameptr,                                              /*  Pointer to symbol name */
+     typechr;                                              /*  Last type examined in table */
+    byte *numbptr;                                         /*  Pointer to symbol number */
 
-    /*  Scan symbol table for matching type and name, or end                 */
+    /*  Scan symbol table for matching type and name, or end */
     typeptr = listhead->name;
-    FOREVER {
+
+    for (;;) {
         numbptr = (byte *) typeptr + sizeof(char);
         nameptr = (char *) numbptr + sizeof(dbyte);
         typechr = *typeptr;
-        if (typechr == 0)
-            break;                                         /*  At end of table, not found       */
-        else if (typechr == type)
-            if (streq(nameptr, name))
-                break;                                     /*  Found in table                   */
 
+        if (typechr == 0) {
+            break;                                         /*  At end of table, not found */
+        } else if (typechr == type) {
+            if (streq(nameptr, name)) {
+                break;                                     /*  Found in table */
+            }
+        }
         typeptr = strchr(nameptr, 0) + 1;
     }
-    if (typechr == 0) {                                    /*  Insert new name                  */
+
+    if (typechr == 0) {                                    /*  Insert new name */
         if (nameptr + strlen(name) + sizeof(dbyte) > maxname) {
             PrintMessage(MSG_SYS_SYMBOL_FULL);
             raise_exception(error_event);
             return (NULL);
+
         } else {
-            *typeptr = type;                               /*  Store symbol type and name       */
+            *typeptr = type;                               /*  Store symbol type and name */
             strcpy(nameptr, name);
-            PutSymNumber(nameptr, 0);                      /*  Set symbol number to zero        */
+            PutSymNumber(nameptr, 0);                      /*  Set symbol number to zero */
         }
     }
-    /*  Increment usage count                                                */
+
+    /*  Increment usage count */
     PutSymNumber(nameptr, (dbyte) (GetSymNumber(nameptr) + 1));
     return (nameptr);
 }
 
-/*************************   ATTACH USES SUPERSTATE   ************************/
+/*************************   ATTACH USES SUPERSTATE   *********************** */
 
 MODULE attach_uses_superstate(
     void
@@ -555,9 +567,10 @@ MODULE attach_uses_superstate(
 {
     SS_REF *newnode;
 
-    /*  Pretty-print if necessary                                            */
-    if (pretty)
+    /*  Pretty-print if necessary */
+    if (pretty) {
         XStrCat(pretty_line, " <", token, ">", NULL);
+    }
 
     newnode = (SS_REF *) Check(malloc(sizeof(SS_REF)));
     newnode->next = NULL;
@@ -565,60 +578,63 @@ MODULE attach_uses_superstate(
     newnode->ssname = StrDup(CleanName(token));
     newnode->flag = SS_OPEN;
 
-    ss_tail->next = newnode;                               /*  Attach to reference list         */
-    ss_tail = newnode;                                     /*    and update ss_tail             */
+    ss_tail->next = newnode;                               /*  Attach to reference list */
+    ss_tail = newnode;                                     /*    and update ss_tail */
 }
 
-/**************************   STORE EVENT NUMBER   ***************************/
+/**************************   STORE EVENT NUMBER   ************************** */
 
 MODULE store_event_number(
     void
 )
 {
-    if (streq(token, "(--)"))
+    if (streq(token, "(--)")) {
         event_number = 0;
-    else if (strlen(token) != 4) {
+    } else if (strlen(token) != 4) {
         syntax_error(0, MSG_INV_EVENT_NUMBER, token, expect);
         event_number = 0;
     } else {
         event_number = (token[2] - '0') * 10 + (token[3] - '0');
-        if (event_number == 0)
+        if (event_number == 0) {
             syntax_error(0, MSG_INV_EVENT_NUMBER, token, expect);
+        }
     }
 }
 
-/***************************   ATTACH NEW EVENT   ****************************/
+/***************************   ATTACH NEW EVENT   *************************** */
 
 MODULE attach_new_event(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
+    /*  Pretty-print if necessary */
     if (pretty) {
-        if (cur_event == NULL)
+        if (cur_event == NULL) {
             FileWrite(pretty, pretty_line);
+        }
 
-        if (event_number)
+        if (event_number) {
             sprintf(pretty_line, "    (%02d) %-35s", event_number, token);
-        else
+        } else {
             sprintf(pretty_line, "    (--) %-35s", token);
+        }
     }
 
     cur_event = alloc_node('e', cur_state, cur_event);
     cur_module = NULL;
-    if (streq(token, "terminate")
-        || streq(token, "the_next")
-        || streq(token, "the_exception"))
+
+    if (streq(token, "terminate") || streq(token, "the_next") || streq(token, "the_exception")) {
         syntax_error(error_event, MSG_INV_EVENT_NAME, token);
+    }
 }
 
-/***************************   ATTACH NEXT STATE   ***************************/
+/***************************   ATTACH NEXT STATE   ************************** */
 
 MODULE attach_next_state(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
+    /*  Pretty-print if necessary */
     if (pretty) {
         XStrCat(pretty_line, "-> ", token, NULL);
         FileWrite(pretty, pretty_line);
@@ -627,7 +643,7 @@ MODULE attach_next_state(
     cur_module = alloc_node('n', cur_event, NULL);
 }
 
-/*************************   ATTACH SAME NEXT STATE   ************************/
+/*************************   ATTACH SAME NEXT STATE   *********************** */
 
 MODULE attach_same_next_state(
     void
@@ -635,25 +651,25 @@ MODULE attach_same_next_state(
 {
     static char saved_token[LINE_MAX];
 
-    /*  Pretty-print if necessary                                            */
+    /*  Pretty-print if necessary */
     if (pretty) {
         XStrCat(pretty_line, "->", NULL);
         FileWrite(pretty, pretty_line);
     }
 
     strcpy(saved_token, token);
-    strcpy(token, statename);                              /*  Next state is current            */
+    strcpy(token, statename);                              /*  Next state is current */
     cur_module = alloc_node('n', cur_event, NULL);
     strcpy(token, saved_token);
 }
 
-/***************************   ATTACH NEW MODULE   ***************************/
+/***************************   ATTACH NEW MODULE   ************************** */
 
 MODULE attach_new_module(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
+    /*  Pretty-print if necessary */
     if (pretty) {
         sprintf(pretty_line, "          + %s", token);
         FileWrite(pretty, pretty_line);
@@ -662,20 +678,20 @@ MODULE attach_new_module(
     cur_module = alloc_node('m', cur_event, cur_module);
 }
 
-/**************************   ATTACH EMPTY MODULE   **************************/
+/**************************   ATTACH EMPTY MODULE   ************************* */
 
 MODULE attach_empty_module(
     void
 )
 {
-    /*  Pretty-print if necessary                                            */
+    /*  Pretty-print if necessary */
     if (pretty) {
         sprintf(pretty_line, "          +");
         FileWrite(pretty, pretty_line);
     }
 }
 
-/***************************   EXPECT STATE NAME   ***************************/
+/***************************   EXPECT STATE NAME   ************************** */
 
 MODULE expect_state_name(
     void
@@ -684,7 +700,7 @@ MODULE expect_state_name(
     strcpy(expect, "statename:");
 }
 
-/************************   EXPECT STATE DEFINITION   ************************/
+/************************   EXPECT STATE DEFINITION   *********************** */
 
 MODULE expect_state_definition(
     void
@@ -693,7 +709,7 @@ MODULE expect_state_definition(
     strcpy(expect, "(--) event");
 }
 
-/***************************   EXPECT EVENT NAME   ***************************/
+/***************************   EXPECT EVENT NAME   ************************** */
 
 MODULE expect_event_name(
     void
@@ -702,7 +718,7 @@ MODULE expect_event_name(
     strcpy(expect, "eventname");
 }
 
-/************************   EXPECT EVENT DEFINITION   ************************/
+/************************   EXPECT EVENT DEFINITION   *********************** */
 
 MODULE expect_event_definition(
     void
@@ -711,7 +727,7 @@ MODULE expect_event_definition(
     strcpy(expect, "+ module");
 }
 
-/**************************   EXPECT NEXT POINTER   **************************/
+/**************************   EXPECT NEXT POINTER   ************************* */
 
 MODULE expect_next_pointer(
     void
@@ -720,7 +736,7 @@ MODULE expect_next_pointer(
     strcpy(expect, "->");
 }
 
-/**************************   EXPECT MODULE NAME   ***************************/
+/**************************   EXPECT MODULE NAME   ************************** */
 
 MODULE expect_module_name(
     void
@@ -729,7 +745,7 @@ MODULE expect_module_name(
     strcpy(expect, "modulename");
 }
 
-/************************   EXPAND MACRO CONSTRUCTS   ************************/
+/************************   EXPAND MACRO CONSTRUCTS   *********************** */
 
 MODULE expand_macro_constructs(
     void
@@ -738,60 +754,76 @@ MODULE expand_macro_constructs(
     SS_REF *refnode;
     lrnode *state,
     *event,
-    *check;                                                /*  Look at events                   */
-    char *symptr,                                          /*  Pointer into symbol table        */
-    *nameptr;                                              /*  Pointer to symbol name           */
+    *check;                                                /*  Look at events */
+    char *symptr,                                          /*  Pointer into symbol table */
+    *nameptr;                                              /*  Pointer to symbol name */
     Bool found;
 
-    /*  Resolve superstate references                                        */
-    for (refnode = ss_head->next; refnode; refnode = refnode->next)
+    /*  Resolve superstate references */
+    for (refnode = ss_head->next; refnode; refnode = refnode->next) {
         resolve_superstate(refnode);
+    }
 
-    /*  Resolve $other event references                                      */
-    for (state = listhead->child; state; state = state->next)
-        for (event = state->child; event; event = event->next)
+    /*  Resolve $other event references */
+    for (state = listhead->child; state; state = state->next) {
+        for (event = state->child; event; event = event->next) {
             if (streq(event->name, "$other")) {
-                /*  Find all events not handled in state, and add them       */
+
+                /*  Find all events not handled in state, and add them */
                 for (symptr = listhead->name; *symptr;) {
                     nameptr = symptr + sizeof(char) + sizeof(dbyte);
                     if (*symptr == 'e') {
+
                         found = FALSE;
-                        for (check = state->child; check; check = check->next)
+                        for (check = state->child; check; check = check->next) {
                             if (streq(check->name, nameptr)) {
                                 found = TRUE;
                                 break;
                             }
-                        if (!found)
+                        }
+
+                        if (!found) {
                             duplicate_event(state, event, nameptr);
+                        }
                     }
                     symptr = strchr(nameptr, 0) + 1;
                 }
                 remove_event(state, event);
             }
+        }
+    }
 }
 
 static void resolve_superstate(
     SS_REF *refnode
 )
 {
-    SS_REF *ssnext;                                        /*  Superstate itself in ref list    */
-    lrnode *ssnode;                                        /*  Superstate node pointer          */
+    SS_REF *ssnext;                                        /*  Superstate itself in ref list */
+    lrnode *ssnode;                                        /*  Superstate node pointer */
 
     if (refnode->flag == SS_BUSY) {
         PrintMessage(MSG_SSTATE_LOOP, refnode->state->name);
         raise_exception(error_event);
-    } else /*  Ignore if SS_DONE                */ if (refnode->flag == SS_OPEN) {
+    } else if (refnode->flag == SS_OPEN) {
+        /*  Ignore if SS_DONE                */
         refnode->flag = SS_BUSY;
-        /*  Resolve super-states recursively, then current super-state       */
+
+        /*  Resolve super-states recursively, then current super-state */
         if ((ssnode = NamedState(listhead, refnode->ssname)) != NULL) {
-            for (ssnext = ss_head->next; ssnext; ssnext = ssnext->next)
-                if (ssnext->state == ssnode)
+
+            for (ssnext = ss_head->next; ssnext; ssnext = ssnext->next) {
+
+                if (ssnext->state == ssnode) {
                     resolve_superstate(ssnext);
+                }
+            }
 
             inherit_events(refnode->state, ssnode);
-        } else
+        } else {
             PrintMessage(MSG_SSTATE_NF, refnode->ssname);
+        }
     }
+
     refnode->flag = SS_DONE;
 }
 
@@ -808,33 +840,38 @@ static void inherit_events(
     lrnode *super_state
 )
 {
-    lrnode *super_event,                                   /*  Superstate event node            */
-    *super_module,                                         /*  Superstate module node           */
-    *event,                                                /*  Event in target state            */
-    *module;                                               /*  Module in target state/event     */
+    lrnode *super_event,                                   /*  Superstate event node */
+    *super_module,                                         /*  Superstate module node */
+    *event,                                                /*  Event in target state */
+    *module;                                               /*  Module in target state/event */
 
     for (super_event = super_state->child; super_event; super_event = super_event->next) {
-        event = NULL;                                      /*  Look for event in state          */
-        for (event = target->child; event; event = event->next)
-            if (event->name == super_event->name || event->next == NULL)
-                break;
+        event = NULL;                                      /*  Look for event in state */
 
-        /*  If not found, add event and all modules                          */
+        for (event = target->child; event; event = event->next) {
+            if (event->name == super_event->name || event->next == NULL) {
+                break;
+            }
+        }
+
+        /*  If not found, add event and all modules */
         if (event->name != super_event->name) {
             module = NULL;
             strcpy(token, super_event->name);
             event = alloc_node('e', target, event);
+
             for (super_module = super_event->child; super_module; super_module = super_module->next) {
                 strcpy(token, super_module->name);
-                if (streq(token, super_state->name))
+                if (streq(token, super_state->name)) {
                     strcpy(token, target->name);
+                }
                 module = alloc_node(super_module->type, event, module);
             }
         }
     }
 }
 
-/*  Duplicate event branch, using specified event name                       */
+/*  Duplicate event branch, using specified event name */
 
 static void duplicate_event(
     lrnode *state,
@@ -847,15 +884,18 @@ static void duplicate_event(
     *new_event,
     *new_child;
 
-    /*  Find last event in state, and add after that one                     */
-    for (old_event = event; old_event->next; old_event = old_event->next);
+    /*  Find last event in state, and add after that one */
+    for (old_event = event; old_event->next; old_event = old_event->next) {
+        ;
+    }
 
-    /*  Create event node                                                    */
+    /*  Create event node */
     strcpy(token, name);
     new_event = alloc_node('e', state, old_event);
 
-    /*  Copy event child nodes                                               */
+    /*  Copy event child nodes */
     new_child = NULL;
+
     for (old_child = event->child; old_child; old_child = old_child->next) {
         strcpy(token, old_child->name);
         new_child = alloc_node(old_child->type, new_event, new_child);
@@ -871,60 +911,68 @@ static void remove_event(
     *child,
     *scanev;
 
-    /*  Free all event child nodes                                           */
+    /*  Free all event child nodes */
     for (child = event->child; child;) {
-        /*  Decrement usage count and delete node                            */
+
+        /*  Decrement usage count and delete node */
         PutSymNumber(child->name, (dbyte) (GetSymNumber(child->name) - 1));
         next = child->next;
         free(child);
         child = next;
-        feedback--;                                        /*  Dialog is one node smaller       */
+        feedback--;                                        /*  Dialog is one node smaller */
     }
 
-    /*  Patch-up other event links in state                                  */
+    /*  Patch-up other event links in state */
     next = event->next;
-    if (state->child == event)                             /*  If first event, update state     */
-        state->child = next;                               /*    to point to sibling            */
-    else
-        for (scanev = state->child; scanev; scanev = scanev->next)
-            if (scanev->next == event) {                   /*  Link previous event to next      */
-                /*    if there is any previous       */
+
+    if (state->child == event) {                           /*  If first event, update state */
+        state->child = next;                               /*  to point to sibling */
+    } else {
+
+        for (scanev = state->child; scanev; scanev = scanev->next) {
+            if (scanev->next == event) {                   /*  Link previous event to next, if there is any previous */
                 scanev->next = next;
                 break;
             }
+        }
+    }
 
-    /*  Decrement usage count and delete node                                */
+    /*  Decrement usage count and delete node */
     PutSymNumber(event->name, (dbyte) (GetSymNumber(event->name) - 1));
-    free(event);                                           /*  Free event node                  */
-    feedback--;                                            /*  Dialog is one node smaller       */
+    free(event);                                           /*  Free event node */
+    feedback--;                                            /*  Dialog is one node smaller */
 }
 
-/************************   BUILD SOURCE FILE NAME   *************************/
+/************************   BUILD SOURCE FILE NAME   ************************ */
 
 MODULE build_source_file_name(
     void
 )
 {
     stats->source = (char *) Check(malloc(LR_FILENAMEMAX + 1));
-    if (OPT_SOURCE.flags & OPT_ON)
+
+    if (OPT_SOURCE.flags & OPT_ON) {
         strcpy(stats->source, OPT_SOURCE.value);
-    else {
+    } else {
         strcpy(stats->source, filename);
         StripExtension(stats->source);
-        /*  If '-plusd' specified, enforce name + 'd' rule for dialogs       */
+
+        /*  If '-plusd' specified, enforce name + 'd' rule for dialogs */
         if (OPT_PLUSD.flags && OPT_ON) {
-            if (strlast(stats->source) == 'd')
+
+            if (strlast(stats->source) == 'd') {
                 strlast(stats->source) = 0;
-            else {
+            } else {
                 PrintMessage(MSG_PLUSD_NAME_ERROR, filename);
                 raise_exception(error_event);
             }
         }
     }
+
     DefaultExtension(stats->source, stats->source, "c");
 }
 
-/***********************   DISPLAY UNEXPECTED TOKEN   ************************/
+/***********************   DISPLAY UNEXPECTED TOKEN   *********************** */
 
 MODULE display_unexpected_token(
     void
@@ -933,7 +981,7 @@ MODULE display_unexpected_token(
     syntax_error(0, MSG_UNEXPECTED_TOKEN, token, expect);
 }
 
-/*************************   RETURN ERROR FEEDBACK   *************************/
+/*************************   RETURN ERROR FEEDBACK   ************************ */
 
 MODULE return_error_feedback(
     void
@@ -942,15 +990,16 @@ MODULE return_error_feedback(
     feedback = -1;
 }
 
-/***************************   GET EXTERNAL EVENT   **************************/
+/***************************   GET EXTERNAL EVENT   ************************* */
 
 MODULE get_external_event(
     void
 )
 {
+    ;
 }
 
-/***************************   CLOSE DIALOG FILE   ***************************/
+/***************************   CLOSE DIALOG FILE   ************************** */
 
 MODULE close_dialog_file(
     void
@@ -959,38 +1008,40 @@ MODULE close_dialog_file(
     SS_REF *refnode,
     *next;
 
-    /*  Free superstate ref list                                             */
+    /*  Free superstate ref list */
     for (refnode = ss_head->next; refnode;) {
         next = refnode->next;
         free(refnode->ssname);
         free(refnode);
         refnode = next;
     }
-    free(ss_head);                                         /*  Free superstate list head        */
+
+    free(ss_head);                                         /*  Free superstate list head */
     FileClose(input);
 }
 
-/*************************   TERMINATE THE PROGRAM    ************************/
+/*************************   TERMINATE THE PROGRAM    *********************** */
 
 MODULE terminate_the_program(
     void
 )
 {
-    /*  The FileCrLf flag indicates whether a CR was found in the dialog     */
+    /*  The FileCrLf flag indicates whether a CR was found in the dialog */
     /*  file (being the last file read).  This flag is used when we generate */
-    /*  output so that the output matches the dialog.  This is useful when   */
-    /*  we run Libero on a system but on a remote disk that has a different  */
-    /*  line-end convention.                                                 */
+    /*  output so that the output matches the dialog.  This is useful when */
+    /*  we run Libero on a system but on a remote disk that has a different */
+    /*  line-end convention. */
 
-    stats->crlf = FileCrLf;                                /*  Get state of this global flag    */
+    stats->crlf = FileCrLf;                                /*  Get state of this global flag */
 
-    /*  Finish-up pretty-printing if that's what we're doing                 */
+    /*  Finish-up pretty-printing if that's what we're doing */
     if (pretty && feedback != -1) {
         FileClose(pretty);
         FixedExtension(token, filename, "bak");
-        remove(token);                                     /*  Kill any existing .bak file      */
-        rename(filename, token);                           /*  Now rename old dialog file       */
+        remove(token);                                     /*  Kill any existing .bak file */
+        rename(filename, token);                           /*  Now rename old dialog file */
         rename(pretty_file, filename);
     }
+
     the_next_event = terminate_event;
 }

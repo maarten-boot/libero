@@ -80,9 +80,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.                *
  *=========================================================================== */
 
-#include "prelude.h"                                       /*  Standard header file */
-#include "lrglib.h"                                        /*  Prototypes for library functions */
-#include "lrpriv.h"                                        /*  Private includes */
+#include "prelude.h"                    /*  Standard header file */
+#include "lrglib.h"                     /*  Prototypes for library functions */
+#include "lrpriv.h"                     /*  Private includes */
+
 
 /*-----------------------------.
  |  FileOpen                   |
@@ -96,19 +97,18 @@
  |  Sets the global variable FileCrLf to FALSE.                              |
  `--------------------------------------------------------------------------- */
 
-Bool FileCrLf = FALSE;                                     /*  Initial default */
+Bool FileCrLf = FALSE;                  /*  Initial default */
 
-FILE *FileOpen(
-    char *filename,
-    char mode
-)
+FILE *FileOpen (char *filename, char mode)
 {
-    ASSERT(filename != NULL);
+    ASSERT (filename != NULL);
 
     FileCrLf = FALSE;
-    return (fopen(filename, (mode == 'r' ? FOPEN_READ_BINARY : mode == 'w' ? FOPEN_WRITE_BINARY :
-                             /* else */ FOPEN_APPEND_BINARY)));
+    return (fopen (filename, (mode == 'r'? FOPEN_READ_BINARY:
+                              mode == 'w'? FOPEN_WRITE_BINARY:
+                              /* else */   FOPEN_APPEND_BINARY)));
 }
+
 
 /*-----------------------------.
  |  FileClose                  |
@@ -120,13 +120,12 @@ FILE *FileOpen(
  |  Sets the global variable FileCrLf to FALSE.                              |
  `--------------------------------------------------------------------------- */
 
-Bool FileClose(
-    FILE *stream
-)
+Bool FileClose (FILE *stream)
 {
-    ASSERT(stream != NULL);
-    return (fclose(stream));
+    ASSERT (stream != NULL);
+    return (fclose (stream));
 }
+
 
 /*-----------------------------.
  |  FileRead                   |
@@ -142,37 +141,42 @@ Bool FileClose(
  |  This variable is by default FALSE.  It is also used by FileWrite.        |
  `--------------------------------------------------------------------------- */
 
-Bool FileRead(
-    FILE *stream,
-    char *string
-)
+Bool FileRead (FILE *stream, char *string)
 {
-    int ch,                                                /*  Character read from file */
-     cnbr;                                                 /*  Index into returned string */
+    int
+        ch,                             /*  Character read from file */
+        cnbr;                           /*  Index into returned string */
 
-    cnbr = 0;                                              /*  Start at the beginning... */
-    memset(string, ' ', LINE_MAX);                         /*    and prepare entire line */
-    for (;;) {
-        ch = fgetc(stream);                                /*  Get next character from file */
-        if (ch == '\t')                                    /*  Jump if tab */
+    cnbr = 0;                           /*  Start at the beginning... */
+    memset (string, ' ', LINE_MAX);     /*    and prepare entire line */
+    FOREVER
+      {
+        ch = fgetc (stream);            /*  Get next character from file */
+        if (ch == '\t')                 /*  Jump if tab */
             cnbr = ((cnbr >> 3) << 3) + 8;
-        else if (ch == '\r')                               /*  Found carriage-return */
-            FileCrLf = TRUE;                               /*    Set flag and ignore CR */
-        else if ((ch == '\n')                              /*  Have end of line */
-                 ||(ch == EOF)                             /*    or end of file */
-                 ||(ch == 26)) {                           /*    or MS-DOS Ctrl-Z */
-            string[cnbr] = '\0';                           /*  Terminate string */
-            return (ch == '\n' || cnbr);                   /*  and return TRUE/FALSE */
-        } else if (cnbr < LINE_MAX)
-            string[cnbr++] = (char) ch;                    /*  Else add char to string */
+        else
+        if (ch == '\r')                 /*  Found carriage-return */
+            FileCrLf = TRUE;            /*    Set flag and ignore CR */
+        else
+        if ((ch == '\n')                /*  Have end of line */
+        ||  (ch == EOF)                 /*    or end of file */
+        ||  (ch == 26))                 /*    or MS-DOS Ctrl-Z */
+          {
+            string [cnbr] = '\0';       /*  Terminate string */
+            return (ch == '\n' || cnbr);    /*  and return TRUE/FALSE */
+          }
+        else
+        if (cnbr < LINE_MAX)
+            string [cnbr++] = (char) ch;    /*  Else add char to string */
 
-        if (cnbr >= LINE_MAX) {                            /*  Return in any case if line is */
-            /*    too long - the line will be */
-            string[LINE_MAX] = '\0';                       /*    cut into pieces */
+        if (cnbr >= LINE_MAX)           /*  Return in any case if line is */
+          {                             /*    too long - the line will be */
+            string [LINE_MAX] = '\0';   /*    cut into pieces */
             return (TRUE);
-        }
-    }
+          }
+      }
 }
+
 
 /*-----------------------------.
  |  FileWrite                  |
@@ -184,20 +188,18 @@ Bool FileRead(
  |  Returns: string, or NULL if no data could be written from the stream.    |
  `--------------------------------------------------------------------------- */
 
-char *FileWrite(
-    FILE *stream,
-    char *string
-)
+char *FileWrite (FILE *stream, char *string)
 {
-    fputs(string, stream);
+    fputs (string, stream);
     if (FileCrLf)
-        fputc('\r', stream);
+        fputc ('\r', stream);
 
-    if (fputc('\n', stream) == EOF)
+    if (fputc ('\n', stream) == EOF)
         return (NULL);
     else
         return (string);
 }
+
 
 /*-----------------------------.
  |  FileCopy                   |
@@ -212,47 +214,45 @@ char *FileWrite(
  |  In Dec C the mode is ignored.                                            |
  `--------------------------------------------------------------------------- */
 
-int FileCopy(
-    char *dest,
-    char *src,
-    char mode
-)
+int FileCopy (char *dest, char *src, char mode)
 {
-    FILE *inf,
-    *outf;
+    FILE *inf, *outf;
     char *buffer,
-     openmode[3] = "??";
-    size_t chars_read;                                     /*  Amount read from stream */
-    int feedback = 0;
+         openmode [3] = "??";
+    size_t chars_read;                  /*  Amount read from stream */
+    int  feedback = 0;
 
-    if (FileExists(dest))
-        return (1);                                        /*  Cancel: dest already exists */
+    if (FileExists (dest))
+        return (1);                     /*  Cancel: dest already exists */
 
-#if (defined (__VMS__))
-    openmode[1] = 0;
-#else
-    openmode[1] = mode;
-#endif
-    openmode[0] = 'r';
-    if ((inf = fopen(src, openmode)) == NULL)
-        return (-1);                                       /*  Input file not found */
+#   if (defined (__VMS__))
+    openmode [1] = 0;
+#   else
+    openmode [1] = mode;
+#   endif
+    openmode [0] = 'r';
+    if ((inf = fopen (src, openmode)) == NULL)
+        return (-1);                    /*  Input file not found */
 
-    if ((buffer = malloc(SHRT_MAX)) == NULL)
-        feedback = -1;                                     /*  Insufficient memory for buffer */
-    else {
-        openmode[0] = 'w';
-        outf = fopen(dest, openmode);
-        while ((chars_read = fread(buffer, 1, SHRT_MAX, inf)) != 0)
-            if (fwrite(buffer, 1, chars_read, outf) != chars_read) {
+    if ((buffer = malloc (SHRT_MAX)) == NULL)
+        feedback = -1;                  /*  Insufficient memory for buffer */
+    else
+      {
+        openmode [0] = 'w';
+        outf = fopen (dest, openmode);
+        while ((chars_read = fread (buffer, 1, SHRT_MAX, inf)) != 0)
+            if (fwrite (buffer, 1, chars_read, outf) != chars_read)
+              {
                 feedback = -1;
                 break;
-            }
-        fclose(outf);
-        free(buffer);
-    }
-    fclose(inf);
+              }
+        fclose (outf);
+        free (buffer);
+      }
+    fclose (inf);
     return (feedback);
 }
+
 
 /*-----------------------------.
  |  FileExists                 |
@@ -260,28 +260,23 @@ int FileCopy(
  |  Description: returns TRUE if the file exists, or FALSE if it does not.   |
  `--------------------------------------------------------------------------- */
 
-Bool FileExists(
-    char *filename
-)
+Bool FileExists (char *filename)
 {
     FILE *file;
 
-    file = fopen(filename, "r");
+    file = fopen (filename, "r");
     if (file)
-        fclose(file);
+        fclose (file);
     return (file != NULL);
 }
 
+
 /*  Ensure our buffers will be big enough for dir + name + delimiters */
 #if ((LINE_MAX - FILE_NAME_MAX) < (FILE_DIR_MAX + 10))
-#error "Cannot compile; FILE_NAME_MAX is too large."
+#   error "Cannot compile; FILE_NAME_MAX is too large."
 #endif
 
-static char *BuildNextPath(
-    char *dest,
-    char *path,
-    char *name
-);
+static char *BuildNextPath (char *dest, char *path, char *name);
 
 /*  -------------------------------------------------------------------------
  *  FileWhere
@@ -334,116 +329,118 @@ static char *BuildNextPath(
  *  'w', 'a', or 's', always returns a valid filename.
  */
 
-char *FileWhere(
-    char mode,
-    char *path,
-    char *name,
-    char *ext
-)
+char *
+FileWhere (char mode, char *path, char *name, char *ext)
 {
     static char
-#if (PATHFOLD == TRUE)
-     path_name[PATH_MAX + 1],                              /*  Copy of path symbol */
-#endif
-     work_name[LINE_MAX + 1],                              /*  Name plus ext */
-     full_name[LINE_MAX + 1];                              /*  Dir plus name plus ext */
+#       if (PATHFOLD == TRUE)
+        path_name [PATH_MAX + 1],       /*  Copy of path symbol */
+#       endif
+        work_name [LINE_MAX + 1],       /*  Name plus ext */
+        full_name [LINE_MAX + 1];       /*  Dir plus name plus ext */
     char
-    *pathptr;                                              /*  End of directory in Path */
+        *pathptr;                       /*  End of directory in Path */
 
-    if (ext != NULL && *ext) {                             /*  Append extension if not null */
-        /*    to get name + ext into */
-        if (ext[0] == '.')                                 /*    work_name. */
-            FixedExtension(work_name, name, ext);
+    if (ext != NULL && *ext)            /*  Append extension if not null */
+      {                                 /*    to get name + ext into */
+        if (ext [0] == '.')             /*    work_name. */
+            FixedExtension (work_name, name, ext);
         else
-            DefaultExtension(work_name, name, ext);
-    } else
-        strcpy(work_name, name);
+            DefaultExtension (work_name, name, ext);
+      }
+    else
+        strcpy (work_name, name);
 
 #if (NAMEFOLD == TRUE)
-    StrUpr(work_name);                                     /*  Fold to uppercase if needed */
+    StrUpr (work_name);                 /*  Fold to uppercase if needed */
 #endif
 
-    if (path != NULL && *path) {                           /*  Get value of path, or NULL */
-        pathptr = getenv(path);                            /*  Translate path symbol */
+    if (path != NULL && *path)          /*  Get value of path, or NULL */
+      {
+        pathptr = getenv (path);        /*  Translate path symbol */
         if (pathptr == NULL)
-            pathptr = path;                                /*  If not found, use literally */
-#if (PATHFOLD == TRUE)                                     /*  Fold to uppercase if necessary */
-        if (pathptr) {
-            strcpy(path_name, pathptr);
+            pathptr = path;             /*  If not found, use literally */
+#if (PATHFOLD == TRUE)                  /*  Fold to uppercase if necessary */
+        if (pathptr)
+          {
+            strcpy (path_name, pathptr);
             pathptr = path_name;
-            StrUpr(path_name);
-        }
+            StrUpr (path_name);
+          }
 #endif
-    } else
+      }
+    else
         pathptr = NULL;
 
     /*  Take care of 'w' and 's' options first */
-    if (mode == 'w')                                       /*  Create output file locally */
+    if (mode == 'w')                    /*  Create output file locally */
         return (work_name);
 
-    if (mode == 's') {                                     /*  Get specific directory name */
-        BuildNextPath(full_name, pathptr, work_name);
+    if (mode == 's')                    /*  Get specific directory name */
+      {
+        BuildNextPath (full_name, pathptr, work_name);
         return (full_name);
-    }
+      }
 
-    if (FileExists(work_name))                             /*  Find file in current directory? */
-        return (work_name);                                /*  Then return name + ext */
+    if (FileExists (work_name))         /*  Find file in current directory? */
+        return (work_name);             /*  Then return name + ext */
 
-#if (defined (__VMS__))
+#   if (defined (__VMS__))
     /*  VMS lets you open a file like this 'path:name' */
     if (pathptr)
-        sprintf(full_name, "%s:%s", path, work_name);
+        sprintf (full_name, "%s:%s", path, work_name);
     else
-        strcpy(full_name, work_name);
+        strcpy (full_name, work_name);
 
-    if ((mode == 'a')                                      /*  Create file locally or find it */
-        ||(FileExists(full_name)))                         /*    using path symbol value */
+    if ((mode == 'a')                   /*  Create file locally or find it */
+    ||  (FileExists (full_name)))       /*    using path symbol value */
         return (full_name);
     else
-        return (NULL);                                     /*  Not found for reading */
-#else
+        return (NULL);                  /*  Not found for reading */
+#   else
 
-    if (!pathptr)                                          /*  Now we need a path */
-        return (NULL);                                     /*   - if none defined, give up */
+    if (!pathptr)                       /*  Now we need a path */
+        return (NULL);                  /*   - if none defined, give up */
 
-    for (;;) {                                             /*  Try each path component */
-        pathptr = BuildNextPath(full_name, pathptr, work_name);
-        if (FileExists(full_name))
-            return (full_name);                            /*  Until we find one, */
+    FOREVER                             /*  Try each path component */
+      {
+        pathptr = BuildNextPath (full_name, pathptr, work_name);
+        if (FileExists (full_name))
+            return (full_name);         /*  Until we find one, */
 
-        if (*pathptr == '\0') {                            /*    or we come to the end of */
-            /*    the path */
+        if (*pathptr == '\0')           /*    or we come to the end of */
+          {                             /*    the path */
             if (mode == 'r')
-                return (NULL);                             /*  Input file was not found... */
+                return (NULL);          /*  Input file was not found... */
             else
                 return (full_name);
-        }
-    }
-#endif
+          }
+      }
+#   endif
 }
 
-static char *BuildNextPath(
-    char *dest,
-    char *path,
-    char *name
-)
-{
-    int length;                                            /*  length of directory name */
 
-    length = strcspn(path, PATHSEP);
-    strncpy(dest, path, length);
-    path += length;                                        /*  Bump past path delimiter */
-    if (*path)                                             /*    unless we are at the end */
-        path++;                                            /*    of the path */
+static char *
+BuildNextPath (char *dest, char *path, char *name)
+{
+    int
+        length;                         /*  length of directory name */
+
+    length = strcspn (path, PATHSEP);
+    strncpy (dest, path, length);
+    path += length;                     /*  Bump past path delimiter */
+    if (*path)                          /*    unless we are at the end */
+        path++;                         /*    of the path */
 
     if ((length)
-        && (dest[length - 1] != PATHEND))
-        dest[length++] = PATHEND;                          /*  Add path-to-filename delimiter */
+    && (dest [length - 1] != PATHEND))
+        dest [length++] = PATHEND;      /*  Add path-to-filename delimiter */
 
-    dest[length] = '\0';
-    strcat(dest, name);
+    dest [length] = '\0';
+    strcat (dest, name);
     return (path);
 }
+
 
 /*-----------------------------.
  |  SafeToExtend               |
@@ -458,26 +455,26 @@ static char *BuildNextPath(
  |          truncated by 1 position to remove this character.                |
  `--------------------------------------------------------------------------- */
 
-Bool SafeToExtend(
-    char *filename
-)
+Bool SafeToExtend (char *filename)
 {
 #if (defined (__MSDOS__))
-    int handle;                                            /*  Opened file handle */
-    char endoffile;                                        /*  Last character in file */
+    int  handle;                        /*  Opened file handle */
+    char endoffile;                     /*  Last character in file */
 
-    handle = open(filename, O_RDWR + O_BINARY, S_IREAD | S_IWRITE);
-    if (handle) {                                          /*  If not found, ignore */
-        lseek(handle, -1, SEEK_END);
-        read(handle, &endoffile, 1);
+    handle = open (filename, O_RDWR + O_BINARY, S_IREAD | S_IWRITE);
+    if (handle)                         /*  If not found, ignore */
+      {
+        lseek (handle, -1, SEEK_END);
+        read  (handle, &endoffile, 1);
         if (endoffile == 26)
-            chsize(handle, filelength(handle) - 1);
+            chsize (handle, filelength (handle) - 1);
 
-        close(handle);
-    }
+        close (handle);
+      }
 #endif
     return (TRUE);
 }
+
 
 /*-----------------------------.
  |  DefaultExtension           |
@@ -491,35 +488,34 @@ Bool SafeToExtend(
  |  can start with or without a point.  If ext is null or empty, exits.      |
  `--------------------------------------------------------------------------- */
 
-int DefaultExtension(
-    char *dest,
-    char *src,
-    char *ext
-)
+int DefaultExtension (char *dest, char *src, char *ext)
 {
-    int len,
-     i;
+    int len, i;
     char *ptr;
 
-    if (dest != src)                                       /*  Copy src to dest if not same */
-        strcpy(dest, src);
+    if (dest != src)                    /*  Copy src to dest if not same */
+        strcpy (dest, src);
 
-    if (ext != NULL && *ext != 0) {
-        len = strlen(dest);
+    if (ext != NULL && *ext != 0)
+      {
+        len = strlen (dest);
         for (i = len - 1, ptr = dest + i; i >= 0; i--, ptr--)
             if (*ptr == '\\' || *ptr == '/' || *ptr == '.')
                 break;
 
-        if (i < 0 || *ptr != '.') {
-            if (*ext != '.') {
-                dest[len++] = '.';
-                dest[len] = '\0';
-            }
-            strcat(dest + len, ext);
-        }
-    }
+        if (i < 0 || *ptr != '.')
+          {
+            if (*ext != '.')
+              {
+                dest [len++] = '.';
+                dest [len] = '\0';
+              }
+            strcat (dest + len, ext);
+          }
+      }
     return (0);
 }
+
 
 /*-----------------------------.
  |  FixedExtension             |
@@ -534,18 +530,15 @@ int DefaultExtension(
  |  can start with or without a point.                                       |
  `--------------------------------------------------------------------------- */
 
-int FixedExtension(
-    char *dest,
-    char *src,
-    char *ext
-)
+int FixedExtension (char *dest, char *src, char *ext)
 {
-    if (dest != src)                                       /*  Copy src to dest if not same */
-        strcpy(dest, src);
+    if (dest != src)                    /*  Copy src to dest if not same */
+        strcpy (dest, src);
 
-    StripExtension(dest);
-    return (DefaultExtension(dest, dest, ext));
+    StripExtension (dest);
+    return (DefaultExtension (dest, dest, ext));
 }
+
 
 /*-----------------------------.
  |  StripExtension             |
@@ -555,22 +548,20 @@ int FixedExtension(
  |  Returns: name.                                                           |
  `--------------------------------------------------------------------------- */
 
-char *StripExtension(
-    char *name
-)
+char *StripExtension (char *name)
 {
-    char *dot,
-    *slash;
+    char *dot, *slash;
 
-    dot = strrchr(name, '.');                              /*  Find dot in name, if any */
-    slash = strrchr(name, '\\');                           /*  Find last slash (DOS or Unix) */
+    dot = strrchr (name, '.');          /*  Find dot in name, if any */
+    slash = strrchr (name, '\\');       /*  Find last slash (DOS or Unix) */
     if (slash == NULL)
-        slash = strrchr(name, '/');
+        slash = strrchr (name, '/');
     if (dot > slash)
-        *dot = 0;                                          /*  If we had a dot, truncate name */
+        *dot = 0;                       /*  If we had a dot, truncate name */
 
     return (name);
 }
+
 
 /*-----------------------------.
  |  StripFilePath              |
@@ -581,18 +572,17 @@ char *StripExtension(
  `--------------------------------------------------------------------------- */
 
 char
-*StripFilePath(
-    char *name
-)
+*StripFilePath (char *name)
 {
     char *path_end;
 
-    ASSERT(name != NULL);
-    path_end = strrchr(name, PATHEND);                     /*  Find end of path, if any */
+    ASSERT (name != NULL);
+    path_end = strrchr (name, PATHEND); /*  Find end of path, if any */
     if (path_end != NULL)
-        memmove(name, path_end + 1, strlen(path_end));
+        memmove (name, path_end + 1, strlen (path_end));
     return (name);
 }
+
 
 /*-----------------------------.
  |  StrDup                     |
@@ -606,21 +596,22 @@ char
  |  was itself NULL.                                                         |
  `--------------------------------------------------------------------------- */
 
-char *StrDup(
-    char *string
-)
+char *StrDup (char *string)
 {
     char *copy;
 
-    if (string) {
-        copy = malloc(strlen(string) + 1);
+    if (string)
+      {
+        copy = malloc (strlen (string) + 1);
         if (copy)
-            strcpy(copy, string);
-    } else
+            strcpy (copy, string);
+      }
+    else
         copy = NULL;
 
     return (copy);
 }
+
 
 /*-----------------------------.
  |  StrSkp                     |
@@ -629,14 +620,13 @@ char *StrDup(
  |  character.  When this is a null, the end of the string was reached.      |
  `--------------------------------------------------------------------------- */
 
-char *StrSkp(
-    char *string
-)
+char *StrSkp (char *string)
 {
     while (*string == ' ')
         string++;
     return (string);
 }
+
 
 /*-----------------------------.
  |  StrSet                     |
@@ -645,10 +635,7 @@ char *StrSkp(
  |  final null character to ch.  Returns string.                             |
  `--------------------------------------------------------------------------- */
 
-char *StrSet(
-    char *string,
-    char ch
-)
+char *StrSet (char *string, char ch)
 {
     char *scan;
 
@@ -658,6 +645,7 @@ char *StrSet(
     return (string);
 }
 
+
 /*-----------------------------.
  |  StrPad                     |
  |-----------------------------`---------------------------------------------.
@@ -665,21 +653,18 @@ char *StrSet(
  |  truncating if necessary.  String must be at least length + 1 long.       |
  `--------------------------------------------------------------------------- */
 
-char *StrPad(
-    char *string,
-    char ch,
-    int length
-)
+char *StrPad (char *string, char ch, int length)
 {
     int cursize;
 
-    cursize = strlen(string);                              /*  Get current length of string */
-    while (cursize < length)                               /*  Pad until at desired length */
-        string[cursize++] = ch;
+    cursize = strlen (string);          /*  Get current length of string */
+    while (cursize < length)            /*  Pad until at desired length */
+        string [cursize++] = ch;
 
-    string[cursize++] = '\0';                              /*  Add terminating null */
-    return (string);                                       /*    and return to caller */
+    string [cursize++] = '\0';          /*  Add terminating null */
+    return (string);                    /*    and return to caller */
 }
+
 
 /*-----------------------------.
  |  StrLwr                     |
@@ -689,21 +674,22 @@ char *StrPad(
  |  null, returns null.                                                      |
  `--------------------------------------------------------------------------- */
 
-char *StrLwr(
-    char *string
-)
+char *StrLwr (char *string)
 {
     char *scan;
 
-    if (string) {
+    if (string)
+      {
         scan = string;
-        while (*scan) {
-            *scan = (char) tolower(*scan);
+        while (*scan)
+          {
+            *scan = (char) tolower (*scan);
             scan++;
-        }
-    }
+          }
+      }
     return (string);
 }
+
 
 /*-----------------------------.
  |  StrUpr                     |
@@ -713,21 +699,22 @@ char *StrLwr(
  |  null, returns null.                                                      |
  `--------------------------------------------------------------------------- */
 
-char *StrUpr(
-    char *string
-)
+char *StrUpr (char *string)
 {
     char *scan;
 
-    if (string) {
+    if (string)
+      {
         scan = string;
-        while (*scan) {
-            *scan = (char) toupper(*scan);
+        while (*scan)
+          {
+            *scan = (char) toupper (*scan);
             scan++;
-        }
-    }
+          }
+      }
     return (string);
 }
+
 
 /*-----------------------------.
  |  StrCrop                    |
@@ -737,23 +724,24 @@ char *StrUpr(
  |  null, returns null.                                                      |
  `--------------------------------------------------------------------------- */
 
-char *StrCrop(
-    char *string
-)
+char *StrCrop (char *string)
 {
     char *last;
 
-    if (string) {
-        last = string + strlen(string);
-        while (last > string) {
-            if (!isspace(*(last - 1)))
+    if (string)
+      {
+        last = string + strlen (string);
+        while (last > string)
+          {
+            if (!isspace (*(last - 1)))
                 break;
             last--;
-        }
+          }
         *last = 0;
-    }
+      }
     return (string);
 }
+
 
 /*-----------------------------.
  |  StrOpen                    |
@@ -764,24 +752,23 @@ char *StrCrop(
  |  Returns string.                                                          |
  `--------------------------------------------------------------------------- */
 
-char *StrOpen(
-    char *string,
-    Bool align
-)
+char *StrOpen (char *string, Bool align)
 {
     char *gap;
-    int length;
+    int  length;
 
-    length = strlen(string) + 1;                           /*  By default, move string + NULL */
-    if (align) {                                           /*  If align is TRUE, find gap */
-        gap = strstr(string, "  ");
+    length = strlen (string) + 1;       /*  By default, move string + NULL */
+    if (align)                          /*  If align is TRUE, find gap */
+      {
+        gap = strstr (string, "  ");
         if (gap)
             length = (int) (gap - string);
-    }
-    memmove(string + 1, string, length);
-    string[0] = ' ';                                       /*  Stick a space into string */
+      }
+    memmove (string + 1, string, length);
+    string [0] = ' ';                   /*  Stick a space into string */
     return (string);
 }
+
 
 /*-----------------------------.
  |  StrClose                   |
@@ -791,23 +778,21 @@ char *StrOpen(
  |  more spaces.  Returns string.                                            |
  `--------------------------------------------------------------------------- */
 
-char *StrClose(
-    char *string,
-    Bool align
-)
+char *StrClose (char *string, Bool align)
 {
     char *gap;
-    int length;
+    int  length;
 
-    length = strlen(string);                               /*  By default, move string + NULL */
-    if (align) {                                           /*  If align is TRUE, find gap */
-        gap = strstr(string, "  ");
+    length = strlen (string);           /*  By default, move string + NULL */
+    if (align) {                        /*  If align is TRUE, find gap */
+        gap = strstr (string, "  ");
         if (gap && gap != string)
             length = (int) (gap - string);
     }
-    memmove(string, string + 1, length);
+    memmove (string, string + 1, length);
     return (string);
 }
+
 
 /*-----------------------------.
  |  StrMatch                   |
@@ -819,81 +804,91 @@ char *StrClose(
  |  The algorithm was designed by Leif Svalgaard (lsvalg@ibm.net).           |
  `--------------------------------------------------------------------------- */
 
-int StrMatch(
-    char *string1,
-    char *string2
-)
+int StrMatch (char *string1, char *string2)
 {
-    static int name_weight[30] = {
-        20, 15, 13, 11, 10, 9, 8, 8, 7, 7, 7, 6, 6, 6, 6,
-        6, 5, 5, 5, 5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4
-    };
-    int comp_index,
-     name_index,
-     start_of_string,
-     longest_so_far,
-     substring_contribution,
-     substring_length,
-     compare_length,
-     longest_length,
-     length_difference,
-     name_length,
-     char_index,
-     similarity_index,
-     similarity_weight;
-    char cur_name_char;
+    static int
+        name_weight [30] = {
+            20, 15, 13, 11, 10, 9, 8, 8, 7, 7, 7, 6, 6, 6, 6,
+             6,  5,  5,  5,  5, 5, 4, 4, 4, 4, 4, 4, 4, 4, 4
+        };
+    int
+        comp_index,
+        name_index,
+        start_of_string,
+        longest_so_far,
+        substring_contribution,
+        substring_length,
+        compare_length,
+        longest_length,
+        length_difference,
+        name_length,
+        char_index,
+        similarity_index,
+        similarity_weight;
+    char
+        cur_name_char;
 
-    name_length = strlen(string1);
-    compare_length = strlen(string2);
-    if (name_length > compare_length) {
+    name_length    = strlen (string1);
+    compare_length = strlen (string2);
+    if (name_length > compare_length)
+      {
         length_difference = name_length - compare_length;
-        longest_length = name_length;
-    } else {
+        longest_length    = name_length;
+      }
+    else
+      {
         length_difference = compare_length - name_length;
-        longest_length = compare_length;
-    }
-    if (compare_length) {
+        longest_length    = compare_length;
+      }
+    if (compare_length)
+      {
         similarity_weight = 0;
         substring_contribution = 0;
 
-        for (char_index = 0; char_index < name_length; char_index++) {
+        for (char_index = 0; char_index < name_length; char_index++)
+          {
             start_of_string = char_index;
-            cur_name_char = (char) tolower(string1[char_index]);
-            longest_so_far = 0;
-            comp_index = 0;
+            cur_name_char   = (char) tolower (string1 [char_index]);
+            longest_so_far  = 0;
+            comp_index      = 0;
 
-            while (comp_index < compare_length) {
+            while (comp_index < compare_length)
+              {
                 while ((comp_index < compare_length)
-                       && (tolower(string2[comp_index]) != cur_name_char))
+                &&     (tolower (string2 [comp_index]) != cur_name_char))
                     comp_index++;
 
                 substring_length = 0;
                 name_index = start_of_string;
 
                 while ((comp_index < compare_length)
-                       && (tolower(string2[comp_index])
-                           == tolower(string1[name_index]))) {
+                &&     (tolower (string2 [comp_index])
+                     == tolower (string1 [name_index])))
+                  {
                     if (comp_index == name_index)
                         substring_contribution++;
                     comp_index++;
-                    if (name_index < name_length) {
+                    if (name_index < name_length)
+                      {
                         name_index++;
                         substring_length++;
-                    }
-                }
+                      }
+                  }
                 substring_contribution += (substring_length + 1) * 3;
                 if (longest_so_far < substring_length)
                     longest_so_far = substring_length;
-            }
-            similarity_weight += (substring_contribution + longest_so_far + 1) * 2;
+              }
+            similarity_weight += (substring_contribution
+                                  + longest_so_far + 1) * 2;
             similarity_weight /= name_length + 1;
-        }
-        similarity_index = (name_length < 30 ? name_weight[name_length] : 3)
-            * longest_length;
+          }
+        similarity_index  = (name_length < 30? name_weight [name_length]: 3)
+                          * longest_length;
         similarity_index /= 10;
         similarity_index += 2 * length_difference / longest_length;
-        similarity_index = 100 * similarity_weight / similarity_index;
-    } else
+        similarity_index  = 100 * similarity_weight / similarity_index;
+      }
+    else
         similarity_index = 0;
 
     return (similarity_index);
@@ -908,30 +903,26 @@ int StrMatch(
  |  [DDJ Nov 1992, p. 155]                                                   |
  `--------------------------------------------------------------------------- */
 
-char *XStrCat(
-    char *dest,
-    char *src,
-    ...
-)
+char *XStrCat (char *dest, char *src, ...)
 {
     char
-    *feedback = dest;
+        *feedback = dest;
+    va_list
+        va;
 
-    va_list va;
-
-    while (*dest)                                          /*  Find end of dest string */
+    while (*dest)                       /*  Find end of dest string */
         dest++;
-    va_start(va, src);
+    va_start (va, src);
     while (src != NULL) {
         while (*src)
             *dest++ = *src++;
-        src = va_arg(va, char *
-        );
+        src = va_arg (va, char *);
     }
-    *dest = '\0';                                          /*  Append a null character */
-    va_end(va);
+    *dest = '\0';                       /*  Append a null character */
+    va_end (va);
     return (feedback);
 }
+
 
 /*-----------------------------.
  |  LexCmp                     |
@@ -944,18 +935,16 @@ char *XStrCat(
  |   > 0  if string1 is greater than string2                                 |
  `--------------------------------------------------------------------------- */
 
-int LexCmp(
-    char *string1,
-    char *string2
-)
+int LexCmp (char *string1, char *string2)
 {
     int cmp;
 
     do {
-        cmp = (byte) tolower(*string1) - (byte) tolower(*string2);
+        cmp = (byte) tolower (*string1) - (byte) tolower(*string2);
     } while (*string1++ && *string2++ && cmp == 0);
     return (cmp);
 }
+
 
 /*-----------------------------.
  |  DateNow                    |
@@ -973,21 +962,21 @@ int LexCmp(
  |                                                                           |
  `--------------------------------------------------------------------------- */
 
-DATE_T *DateNow(
-    void
-)
+DATE_T *DateNow (void)
 {
-    time_t time_secs;
-    struct tm *time_struct;
+    time_t        time_secs;
+    struct tm    *time_struct;
     static DATE_T date_now;
 
-    time_secs = time(NULL);
-    time_struct = localtime(&time_secs);
-    date_now.yyyy = time_struct->tm_year + (time_struct->tm_year > 80 ? 1900 : 2000);
-    date_now.mm = time_struct->tm_mon + 1;
-    date_now.dd = time_struct->tm_mday;
+    time_secs     = time (NULL);
+    time_struct   = localtime (&time_secs);
+    date_now.yyyy = time_struct-> tm_year + (time_struct-> tm_year > 80? 1900
+                                                                       : 2000);
+    date_now.mm   = time_struct-> tm_mon  + 1;
+    date_now.dd   = time_struct-> tm_mday;
     return (&date_now);
 }
+
 
 /*-----------------------------.
  |  TimeNow                    |
@@ -1005,23 +994,23 @@ DATE_T *DateNow(
  |                                                                           |
  `--------------------------------------------------------------------------- */
 
-TIME_T *TimeNow(
-    void
-)
+
+TIME_T *TimeNow (void)
 {
-    time_t time_secs;
-    struct tm *time_struct;
+    time_t        time_secs;
+    struct tm    *time_struct;
     static TIME_T time_now;
 
-    time_secs = time(NULL);
-    time_struct = localtime(&time_secs);
+    time_secs   = time (NULL);
+    time_struct = localtime (&time_secs);
 
-    time_now.hh = time_struct->tm_hour;
-    time_now.mm = time_struct->tm_min;
-    time_now.ss = time_struct->tm_sec;
+    time_now.hh = time_struct-> tm_hour;
+    time_now.mm = time_struct-> tm_min;
+    time_now.ss = time_struct-> tm_sec;
 
     return (&time_now);
 }
+
 
 /*-----------------------------.
  |  JulianDate                 |
@@ -1029,19 +1018,18 @@ TIME_T *TimeNow(
  |  Description: returns the number of days since 0 January.                 |
  `--------------------------------------------------------------------------- */
 
-int JulianDate(
-    DATE_T *date
-)
+int JulianDate (DATE_T *date)
 {
     int julian;
-    int days[12] = { 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334 };
+    int days [12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
-    julian = days[date->mm - 1] + date->dd;
-    if (date->mm > 2)
-        julian += LeapYear(date->yyyy);
+    julian = days [date-> mm - 1] + date-> dd;
+    if (date-> mm > 2)
+        julian += LeapYear (date-> yyyy);
 
     return (julian);
 }
+
 
 /*-----------------------------.
  |  LeapYear                   |
@@ -1051,9 +1039,7 @@ int JulianDate(
  |  Comments: handles centuries (1900, 2000, ...) correctly.                 |
  `--------------------------------------------------------------------------- */
 
-int LeapYear(
-    int year
-)
+int LeapYear (int year)
 {
     Bool leap;
 
@@ -1061,13 +1047,14 @@ int LeapYear(
 
     if (year % 4 == 0) {
         leap = TRUE;
-        if ((year % 100 == 0) && (year % 400 != 0)) {
+        if ((year % 100 == 0)        &&  (year % 400 != 0)) {
             leap = FALSE;
         }
     }
 
     return (leap);
 }
+
 
 /*-----------------------------.
  |  PackDate                   |
@@ -1081,18 +1068,17 @@ int LeapYear(
  |  Comments: this packed format is used by MS-DOS to store a file's date.   |
  `--------------------------------------------------------------------------- */
 
-dbyte PackDate(
-    DATE_T *date
-)
+dbyte PackDate (DATE_T *date)
 {
     int year;
 
-    year = date->yyyy - 1980;                              /*  Store year as offset since 1980 */
+    year = date-> yyyy - 1980;          /*  Store year as offset since 1980 */
     if (year < 0)
-        year += 1900;                                      /*  Permit year with century = zero */
+        year += 1900;                   /*  Permit year with century = zero */
 
-    return (dbyte) ((year << 9) + (date->mm << 5) + date->dd);
+    return (dbyte) ((year << 9) + (date-> mm << 5) + date-> dd);
 }
+
 
 /*-----------------------------.
  |  PackTime                   |
@@ -1108,12 +1094,11 @@ dbyte PackDate(
  |  TIME_T will lose 1 second accuracy in 50% of cases.                      |
  `--------------------------------------------------------------------------- */
 
-dbyte PackTime(
-    TIME_T *time
-)
+dbyte PackTime (TIME_T *time)
 {
-    return (dbyte) ((time->hh << 11) + (time->mm << 5) + (time->ss >> 1));
+    return (dbyte) ((time-> hh << 11) + (time-> mm << 5) + (time-> ss >> 1));
 }
+
 
 /*-----------------------------.
  |  UnpackDate                 |
@@ -1123,15 +1108,13 @@ dbyte PackTime(
  |  Comments: this function reverses PackDate ().                            |
  `--------------------------------------------------------------------------- */
 
-void UnpackDate(
-    DATE_T *date,
-    dbyte packdate
-)
+void UnpackDate (DATE_T *date, dbyte packdate)
 {
-    date->yyyy = ((dbyte) (packdate & 0xfe00) >> 9) + 1980;
-    date->mm = (dbyte) (packdate & 0x1e0) >> 5;
-    date->dd = packdate & 0x1f;
+    date-> yyyy = ((dbyte) (packdate & 0xfe00) >> 9) + 1980;
+    date-> mm   =  (dbyte) (packdate & 0x1e0) >> 5;
+    date-> dd   =           packdate & 0x1f;
 }
+
 
 /*-----------------------------.
  |  UnpackTime                 |
@@ -1141,15 +1124,13 @@ void UnpackDate(
  |  Comments: this function reverses PackTime ().                            |
  `--------------------------------------------------------------------------- */
 
-void UnpackTime(
-    TIME_T *time,
-    dbyte packtime
-)
+void UnpackTime (TIME_T *time, dbyte packtime)
 {
-    time->hh = (dbyte) (packtime & 0xf800) >> 11;
-    time->mm = (dbyte) (packtime & 0x7e0) >> 5;
-    time->ss = (dbyte) (packtime & 0x1f) << 1;
+    time-> hh = (dbyte) (packtime & 0xf800) >> 11;
+    time-> mm = (dbyte) (packtime & 0x7e0) >> 5;
+    time-> ss = (dbyte) (packtime & 0x1f) << 1;
 }
+
 
 /*-----------------------------.
  |  DtoS                       |
@@ -1171,22 +1152,15 @@ void UnpackTime(
  |  formats dest as spaces.  Returns dest.                                   |
  `--------------------------------------------------------------------------- */
 
-static int rlen,                                           /*  Length of picture component */
- dptr;                                                     /*  Output dest size */
-static char pchr;                                          /*  Current picture char */
+static int  rlen,                       /*  Length of picture component */
+            dptr;                       /*  Output dest size */
+static char pchr;                       /*  Current picture char */
 
-local DtoS_component(
-    int value,
-    char *dest
-);
+local DtoS_component (int value, char *dest);
 
-char *DtoS(
-    DATE_T *date,
-    char *picture,
-    char *dest
-)
+char *DtoS (DATE_T *date, char *picture, char *dest)
 {
-    char *month_name[] = {
+    char *month_name [] = {
         "January",
         "February",
         "March",
@@ -1201,87 +1175,84 @@ char *DtoS(
         "December"
     };
 
-    int pptr,
-     plen;                                                 /*  Pointer and picture length */
-    int mlen;                                              /*  Month name length */
-    int month;                                             /*  Month 0 - 11 */
+    int pptr, plen;                     /*  Pointer and picture length */
+    int mlen;                           /*  Month name length */
+    int month;                          /*  Month 0 - 11 */
 
-    plen = strlen(picture);
-    strcpy(dest, picture);
-    StrSet(dest, ' ');
+    plen = strlen (picture);
+    strcpy (dest, picture);
+    StrSet (dest, ' ');
 
-    if (date->yyyy == 0)                                   /*  Is date zero? */
+    if (date-> yyyy == 0)               /*  Is date zero? */
         return (dest);
-    else if (date->yyyy < 100)                             /*  No century given? */
-        date->yyyy += 1900;
+    else
+    if (date-> yyyy < 100)              /*  No century given? */
+        date-> yyyy += 1900;
 
     pptr = 0;
     dptr = 0;
     do {
-        pchr = picture[pptr];
-        for (rlen = 0; picture[pptr] == pchr; rlen++, pptr++);
+        pchr = picture [pptr];
+        for (rlen = 0; picture [pptr] == pchr; rlen++, pptr++);
 
         switch (pchr) {
-        case 'C':
-            DtoS_component(date->yyyy / 100, dest);
-            break;
+            case 'C':
+                DtoS_component (date-> yyyy / 100, dest);
+                break;
 
-        case 'Y':
-            DtoS_component(date->yyyy % 100, dest);
-            break;
+            case 'Y':
+                DtoS_component (date-> yyyy % 100, dest);
+                break;
 
-        case 'M':
-            if (rlen < 3)
-                DtoS_component(date->mm, dest);
-            else {
-                month = date->mm - 1;
-                mlen = strlen(month_name[month]);
-                if (rlen > mlen)
-                    rlen = mlen;
-                memcpy(&dest[dptr], month_name[month], rlen);
-                dptr += rlen;
-            }
-            break;
+            case 'M':
+                if (rlen < 3)
+                    DtoS_component (date-> mm, dest);
+                else {
+                    month = date-> mm - 1;
+                    mlen = strlen (month_name [month]);
+                    if (rlen > mlen)
+                        rlen = mlen;
+                    memcpy (&dest [dptr], month_name [month], rlen);
+                    dptr += rlen;
+                }
+                break;
 
-        case 'D':
-            DtoS_component(date->dd, dest);
-            if ((dptr > 2)
-                && (dest[dptr - 3] == ' ')
-                && (dest[dptr - 2] == '0')) {
-                dest[dptr - 2] = dest[dptr - 1];
-                dest[--dptr] = ' ';
-            }
-            break;
+            case 'D':
+                DtoS_component (date-> dd, dest);
+                if ((dptr > 2)
+                && (dest [dptr - 3] == ' ')
+                && (dest [dptr - 2] == '0')) {
+                    dest [dptr - 2] = dest [dptr - 1];
+                    dest [--dptr] = ' ';
+                }
+                break;
 
-        default:
-            while (rlen--)
-                dest[dptr++] = pchr;
+            default:
+                while (rlen--)
+                    dest [dptr++] = pchr;
         }
-    } while (!(pptr >= plen));
-
-    if (dest[0] == '0')                                    /*  Suppress leading zero, */
-        if ((dest[2] < '0')                                /*    if third char in result */
-            ||(dest[2] > '9'))                             /*    is a separator. */
-            dest[0] = ' ';
+    } until (pptr >= plen);
+    if (dest [0] == '0')                /*  Suppress leading zero, */
+        if ((dest [2] < '0')            /*    if third char in result */
+        ||  (dest [2] > '9'))           /*    is a separator. */
+            dest [0] = ' ';
 
     dptr = plen - 1;
-    while (dest[dptr] == ' ')
-        dest[dptr--] = 0;
+    while (dest [dptr] == ' ')
+        dest [dptr--] = 0;
 
     return (dest);
 }
 
-local DtoS_component(
-    int value,
-    char *dest
-)
+local DtoS_component (int value, char *dest)
 {
     if (rlen == 2) {
-        dest[dptr++] = (char) (value / 10 + '0');
-        dest[dptr++] = (char) (value % 10 + '0');
+        dest [dptr++] = (char) (value / 10 + '0');
+        dest [dptr++] = (char) (value % 10 + '0');
     } else
-        dest[dptr++] = pchr;
+        dest [dptr++] = pchr;
 }
+
 
 /*-----------------------------.
  |  StoD                       |
@@ -1295,140 +1266,174 @@ local DtoS_component(
  |  an error occurred, the contents of date are undefined.                   |
  `--------------------------------------------------------------------------- */
 
-int StoD(
-    DATE_T *date,
-    char *picture,
-    char *source
-)
+int StoD (DATE_T *date, char *picture, char *source)
 {
-    char *month_name[] = {
+    char *month_name [] =
+      {
         "jan", "feb", "mar", "apr", "may", "jun",
         "jul", "aug", "sep", "oct", "nov", "dec"
-    };
-    int month_days[] = {
+      };
+    int month_days [] =
+      {
         31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-    };
+      };
 
-    char date_digits[9],                                   /*  8 digits of date */
-     month_letters[4],                                     /*  3 characters of month */
-     ch,                                                   /*  Next character in date */
-    *y_ptr,                                                /*  Where is year in date? */
-    *m_ptr,                                                /*  Where is month in date? */
-    *d_ptr;                                                /*  Where is day in date? */
-    int digits,                                            /*  Number of digits in source */
-     feedback,                                             /*  0 if okay, -1 if errors */
-     delimiters,                                           /*  Number of delimiters in date */
-     digitseq,                                             /*  Number of digits in sequence */
-     count,                                                /*  Number of month letters */
-     year,                                                 /*  Date year value */
-     month,                                                /*  Date month value */
-     day;                                                  /*  Date day value */
-
-    Bool had_month;                                        /*  Did we already get a month? */
+    char
+        date_digits   [9],              /*  8 digits of date */
+        month_letters [4],              /*  3 characters of month */
+        ch,                             /*  Next character in date */
+       *y_ptr,                          /*  Where is year in date? */
+       *m_ptr,                          /*  Where is month in date? */
+       *d_ptr;                          /*  Where is day in date? */
+    int
+        digits,                         /*  Number of digits in source */
+        feedback,                       /*  0 if okay, -1 if errors */
+        delimiters,                     /*  Number of delimiters in date */
+        digitseq,                       /*  Number of digits in sequence */
+        count,                          /*  Number of month letters */
+        year,                           /*  Date year value */
+        month,                          /*  Date month value */
+        day;                            /*  Date day value */
+    Bool
+        had_month;                      /*  Did we already get a month? */
 
     /*  Collect date digits */
-    digits = 0;                                            /*  Nothing collected so far */
-    digitseq = 0;                                          /*  No digits in sequence */
-    feedback = 0;                                          /*  No errors so far */
-    delimiters = 0;                                        /*  We allow up to 2 delimiters */
-    had_month = FALSE;                                     /*  True after 3-letter month seen */
+    digits     = 0;                     /*  Nothing collected so far */
+    digitseq   = 0;                     /*  No digits in sequence */
+    feedback   = 0;                     /*  No errors so far */
+    delimiters = 0;                     /*  We allow up to 2 delimiters */
+    had_month  = FALSE;                 /*  True after 3-letter month seen */
 
-    while (*source) {
+    while (*source)
+      {
         ch = *source++;
-        if (isdigit(ch)) {
-            if (digits < 8) {
+        if (isdigit (ch))
+          {
+            if (digits < 8)
+              {
                 digitseq++;
-                date_digits[digits++] = ch;
-            } else
+                date_digits [digits++] = ch;
+              }
+            else
                 feedback = -1;
-        } else {
+          }
+        else
+          {
             /*  Fill-up to even number of digits */
-            if (digits > (digits / 2) * 2) {
-                date_digits[digits] = date_digits[digits - 1];
-                date_digits[digits - 1] = '0';
+            if (digits > (digits / 2) * 2)
+              {
+                date_digits [digits] = date_digits [digits - 1];
+                date_digits [digits - 1] = '0';
                 digits++;
-            }
+              }
             /*  3 or 5 in a row is not allowed */
             if (digitseq == 3 || digitseq == 5)
                 feedback = -1;
             digitseq = 0;
 
             /*  If a letter, try to match against a month */
-            if (isalpha(ch)) {
+            if (isalpha (ch))
+              {
                 if (had_month)
                     feedback = -1;
-                else {
-                    for (count = 0; count < 4; count++) {
-                        month_letters[count] = (char) tolower(ch);
+                else
+                  {
+                    for (count = 0; count < 4; count++)
+                      {
+                        month_letters [count] = (char) tolower (ch);
                         ch = *source;
-                        if (isalpha(ch))
+                        if (isalpha (ch))
                             source++;
-                        else {
+                        else
+                          {
                             feedback = -1;
                             break;
-                        }
-                    }
-                    month_letters[3] = 0;
+                          }
+                      }
+                    month_letters [3] = 0;
                     for (count = 0; count < 12; count++)
-                        if (streq(month_letters, month_name[count])) {
+                        if (streq (month_letters, month_name [count]))
+                          {
                             count++;
-                            date_digits[digits++] = (char) (count / 10 + '0');
-                            date_digits[digits++] = (char) (count % 10 + '0');
-                        }
+                            date_digits [digits++] = (char) (count / 10 + '0');
+                            date_digits [digits++] = (char) (count % 10 + '0');
+                          }
                     had_month = TRUE;
-                }
-            } else if (ispunct(ch))
+                  }
+              }
+            else
+            if (ispunct (ch))
                 if (++delimiters > 2)
                     feedback = -1;
-        }
-    }
-    if (streq(picture, "DMY")) {
+          }
+      }
+    if (streq (picture, "DMY"))
+      {
         y_ptr = date_digits + 4;
         m_ptr = date_digits + 2;
         d_ptr = date_digits;
-    } else if (streq(picture, "MDY")) {
+      }
+    else
+    if (streq (picture, "MDY"))
+      {
         y_ptr = date_digits + 4;
         m_ptr = date_digits;
         d_ptr = date_digits + 2;
-    } else if (streq(picture, "YMD")) {
+      }
+    else
+    if (streq (picture, "YMD"))
+      {
         y_ptr = date_digits;
-        if (digits == 8) {
+        if (digits == 8)
+          {
             m_ptr = date_digits + 4;
             d_ptr = date_digits + 6;
-        } else {
+          }
+        else
+          {
             m_ptr = date_digits + 2;
             d_ptr = date_digits + 4;
-        }
-    } else
-        return (-1);                                       /*  Error - bad picture */
+          }
+      }
+    else
+        return (-1);                    /*  Error - bad picture */
 
-    if (digits == 0) {                                     /*  Return zero date */
-        year = month = day = 0;
-    } else if (digits == 6 || digits == 8) {
-        day = (d_ptr[0] - '0') * 10 + (d_ptr[1] - '0');
-        month = (m_ptr[0] - '0') * 10 + (m_ptr[1] - '0');
-        year = (y_ptr[0] - '0') * 10 + (y_ptr[1] - '0');
+    if (digits == 0)                    /*  Return zero date */
+      {
+        year  =
+        month =
+        day   = 0;
+      }
+    else
+    if (digits == 6 || digits == 8)
+      {
+        day   = (d_ptr [0] - '0') * 10 + (d_ptr [1] - '0');
+        month = (m_ptr [0] - '0') * 10 + (m_ptr [1] - '0');
+        year  = (y_ptr [0] - '0') * 10 + (y_ptr [1] - '0');
         if (digits == 8)
-            year = (y_ptr[2] - '0') * 10 + (y_ptr[3] - '0') + year * 100;
+            year = (y_ptr [2] - '0') * 10 + (y_ptr [3] - '0') + year * 100;
 
         if (year < 50)
             year += 2000;
-        else if (year < 100)
+        else
+        if (year < 100)
             year += 1900;
 
         if ((month == 0 || month > 12)
-            || (day == 0 || day > month_days[month - 1])
-            || (month == 2 && day == 29 && !LeapYear(year)))
+        ||  (day   == 0 || day   > month_days [month - 1])
+        ||  (month == 2 && day == 29 && !LeapYear (year)))
             feedback = -1;
-    } else
-        return (-1);                                       /*  Error - bad size for date */
+      }
+    else
+        return (-1);                    /*  Error - bad size for date */
 
-    date->yyyy = year;
-    date->mm = month;
-    date->dd = day;
+    date-> yyyy = year;
+    date-> mm   = month;
+    date-> dd   = day;
 
     return (feedback);
 }
+
 
 /*-----------------------------.
  |  TtoS                       |
@@ -1448,67 +1453,63 @@ int StoD(
  |  the destination is formatted as spaces.  Returns dest.                   |
  `--------------------------------------------------------------------------- */
 
-char *TtoS(
-    TIME_T *time,
-    char *picture,
-    char *dest
-)
+char *TtoS (TIME_T *time, char *picture, char *dest)
 {
-    int pptr,
-     plen;                                                 /*  Pointer and picture length */
+    int pptr, plen;                     /*  Pointer and picture length */
     int hour;
 
-    plen = strlen(picture);
-    strcpy(dest, picture);
-    StrSet(dest, ' ');
+    plen = strlen (picture);
+    strcpy (dest, picture);
+    StrSet (dest, ' ');
 
-    if (time->hh == 0)                                     /*  Is time zero? */
+    if (time-> hh == 0)                 /*  Is time zero? */
         return (dest);
 
     pptr = 0;
     dptr = 0;
     do {
-        pchr = picture[pptr];
-        for (rlen = 0; picture[pptr] == pchr; rlen++, pptr++);
+        pchr = picture [pptr];
+        for (rlen = 0; picture [pptr] == pchr; rlen++, pptr++);
 
         switch (pchr) {
-        case 'H':
-            DtoS_component(time->hh, dest);
-            break;
+            case 'H':
+                DtoS_component (time-> hh, dest);
+                break;
 
-        case 'I':
-            hour = (time->hh - 1) % 12 + 1;
-            DtoS_component(hour, dest);
-            if (hour < 10)
-                dest[dptr - 2] = ' ';
-            break;
+            case 'I':
+                hour = (time-> hh - 1) % 12 + 1;
+                DtoS_component (hour, dest);
+                if (hour < 10)
+                    dest [dptr - 2] = ' ';
+                break;
 
-        case 'M':
-            DtoS_component(time->mm, dest);
-            break;
+            case 'M':
+                DtoS_component (time-> mm, dest);
+                break;
 
-        case 'S':
-            DtoS_component(time->ss, dest);
-            break;
+            case 'S':
+                DtoS_component (time-> ss, dest);
+                break;
 
-        case '#':
-            if (rlen == 2) {
-                if (time->hh < 12)
-                    dest[dptr++] = 'a';
-                else
-                    dest[dptr++] = 'p';
-                pchr = 'm';
-            }
-        default:
-            dest[dptr++] = pchr;
+            case '#':
+                if (rlen == 2) {
+                    if (time-> hh < 12)
+                        dest [dptr++] = 'a';
+                    else
+                        dest [dptr++] = 'p';
+                    pchr = 'm';
+                }
+            default:
+                dest [dptr++] = pchr;
         }
-    } while (!(pptr >= plen));
+    } until (pptr >= plen);
 
-    if (dest[0] == '0')                                    /*  Suppress leading zero */
-        dest[0] = ' ';
+    if (dest [0] == '0')                /*  Suppress leading zero */
+        dest [0] = ' ';
 
     return (dest);
 }
+
 
 /*-----------------------------.
  |  StoT                       |
@@ -1520,62 +1521,57 @@ char *TtoS(
  |  an error occurred, the contents of time are undefined.                   |
  `--------------------------------------------------------------------------- */
 
-int StoT(
-    TIME_T *time,
-    char *picture,
-    char *source
-)
+int StoT (TIME_T *time, char *picture, char *source)
 {
-    int index;                                             /*  Index into picture */
-    char *sptr;                                            /*  Next char in source */
-    int hh,
-     mm,
-     ss;                                                   /*  Local time values */
-    int digits = 0;                                        /*  Number of digits in source */
+    int  index;                         /*  Index into picture */
+    char *sptr;                         /*  Next char in source */
+    int  hh, mm, ss;                    /*  Local time values */
+    int  digits = 0;                    /*  Number of digits in source */
     Bool pm_found;
 
-    for (dptr = 0; source[dptr] != '\0'; dptr++)
-        if ((source[dptr] >= '0')
-            && (source[dptr] <= '9'))
+    for (dptr = 0; source [dptr] != '\0'; dptr++)
+        if ((source [dptr] >= '0')
+        &&  (source [dptr] <= '9'))
             digits++;
 
-    if (digits == 0) {                                     /*  Return zero time */
-        time->hh = 0;
-        time->mm = 0;
-        time->ss = 0;
+    if (digits == 0) {                  /*  Return zero time */
+        time-> hh = 0;
+        time-> mm = 0;
+        time-> ss = 0;
         return (0);
     }
     hh = 0;
     mm = 0;
     ss = 0;
     pm_found = FALSE;
-    sptr = StrLwr(source);
+    sptr = StrLwr (source);
 
-    if (source[0] == ' ')                                  /*  Allow leading zero */
-        source[0] = '0';
+    if (source [0] == ' ')              /*  Allow leading zero */
+        source [0] = '0';
 
-    for (index = 0; picture[index]; index++) {
-        switch (picture[index]) {
-        case 'H':
-        case 'I':
-            hh = *sptr++ - '0' + hh * 10;
-            break;
+    for (index = 0; picture [index]; index++)
+      {
+        switch (picture [index]) {
+            case 'H':
+            case 'I':
+                hh = *sptr++ - '0' + hh * 10;
+                break;
 
-        case 'M':
-            mm = *sptr++ - '0' + mm * 10;
-            break;
+            case 'M':
+                mm = *sptr++ - '0' + mm * 10;
+                break;
 
-        case 'S':
-            ss = *sptr++ - '0' + ss * 10;
-            break;
+            case 'S':
+                ss = *sptr++ - '0' + ss * 10;
+                break;
 
-        case '#':
-            if (strstr(sptr, "pm") != NULL)
-                pm_found = TRUE;
-            break;
+            case '#':
+                if (strstr (sptr, "pm") != NULL)
+                    pm_found = TRUE;
+                break;
 
-        default:
-            sptr++;                                        /*  Skip delimiters */
+            default:
+                sptr++;                 /*  Skip delimiters */
         }
     }
 
@@ -1583,16 +1579,17 @@ int StoT(
         hh += 12;
 
     if ((hh > 23)
-        || (mm > 59)
-        || (ss > 59))
+     || (mm > 59)
+     || (ss > 59))
         return (-1);
 
-    time->hh = hh;
-    time->mm = mm;
-    time->ss = ss;
+    time-> hh = hh;
+    time-> mm = mm;
+    time-> ss = ss;
 
     return (0);
 }
+
 
 /*-----------------------------.
  |  OpenMessageFile            |
@@ -1606,16 +1603,14 @@ int StoT(
  `--------------------------------------------------------------------------- */
 
 static FILE *msgfile = NULL;
-static char msgline[LINE_MAX + 1];
+static char msgline [LINE_MAX + 1];
 
-int OpenMessageFile(
-    char *filename
-)
+int OpenMessageFile (char *filename)
 {
     int feedback;
 
-    CloseMessageFile();
-    msgfile = FileOpen(filename, 'r');
+    CloseMessageFile ();
+    msgfile = FileOpen (filename, 'r');
 
     if (msgfile)
         feedback = 0;
@@ -1625,21 +1620,22 @@ int OpenMessageFile(
     return (feedback);
 }
 
+
 /*-----------------------------.
  |  CloseMessageFile           |
  |-----------------------------`---------------------------------------------.
  |  Returns: nothing.                                                        |
  `--------------------------------------------------------------------------- */
 
-void CloseMessageFile(
-    void
-)
+void CloseMessageFile (void)
 {
-    if (msgfile) {
-        FileClose(msgfile);
+    if (msgfile)
+      {
+        FileClose (msgfile);
         msgfile = NULL;
-    }
+      }
 }
+
 
 /*-----------------------------.
  |  PrintMessage               |
@@ -1655,24 +1651,21 @@ void CloseMessageFile(
  |  sure you call OpenMessageFile () before this function.                   |
  `--------------------------------------------------------------------------- */
 
-local read_msg(
-    int msgid
-);
-static char error_text[LINE_MAX + 1];
+local read_msg (int msgid);
+static char
+    error_text [LINE_MAX + 1];
 
-void PrintMessage(
-    int msgid,
-    ...
-)
+void PrintMessage (int msgid, ...)
 {
-    va_list argptr;                                        /*  Argument list pointer */
+    va_list argptr;                     /*  Argument list pointer */
 
-    read_msg(msgid);                                       /*  Retrieve message into msgline */
-    va_start(argptr, msgid);                               /*  Start variable arguments list */
-    vsprintf(error_text, msgline, argptr);
-    va_end(argptr);                                        /*  End variable arguments list */
-    fprintf(stderr, "%s\n", error_text);
+    read_msg (msgid);                   /*  Retrieve message into msgline */
+    va_start (argptr, msgid);           /*  Start variable arguments list */
+    vsprintf (error_text, msgline, argptr);
+    va_end   (argptr);                  /*  End variable arguments list */
+    fprintf  (stderr, "%s\n", error_text);
 }
+
 
 /*-----------------------------.
  |  MessageText                |
@@ -1688,67 +1681,73 @@ void PrintMessage(
  |  Places "." in the message if no more are found.                          |
  `--------------------------------------------------------------------------- */
 
-char *MessageText(
-    int msgid
-)
+char *MessageText (int msgid)
 {
-    read_msg(msgid);                                       /*  Retrieve message into msgline */
+    read_msg (msgid);                   /*  Retrieve message into msgline */
     return (msgline);
 }
 
+
 /*  Read message into msgline, expand '$' if found at end of message */
 
-local read_msg(
-    int msgid
-)
+local read_msg (int msgid)
 {
-    static int lastid = 32767;                             /*  Last message we read */
+    static int
+        lastid = 32767;                 /*  Last message we read */
 
-    if (msgfile == NULL) {
-        sprintf(msgline, "** Message %d not found - file not open **\n", msgid);
-        return;                                            /*  Message not found in file */
-    }
-    if (msgid == -1) {                                     /*  Get next ignoring numbers? */
-        if (!FileRead(msgfile, msgline))
-            strcpy(msgline, "0000 .");                     /*  "." signals end of file */
-    } else {
-        if (msgid <= lastid)                               /*  If necessary, back to start */
-            rewind(msgfile);
+    if (msgfile == NULL)
+      {
+        sprintf (msgline, "** Message %d not found - file not open **\n",
+                          msgid);
+        return;                         /*  Message not found in file */
+      }
+    if (msgid == -1)                    /*  Get next ignoring numbers? */
+      {
+        if (!FileRead (msgfile, msgline))
+            strcpy (msgline, "0000 ."); /*  "." signals end of file */
+      }
+    else
+      {
+        if (msgid <= lastid)            /*  If necessary, back to start */
+            rewind (msgfile);
 
-        for (;;) {
-            if (!FileRead(msgfile, msgline)) {
-                sprintf(msgline, "0000 ** Message %d not found **\n", msgid);
-                break;                                     /*  Message not found in file */
-            }
-            if ((isdigit(*msgline))
-                && (atoi(msgline) == msgid)) {
+        FOREVER
+          {
+            if (!FileRead (msgfile, msgline))
+              {
+                sprintf (msgline, "0000 ** Message %d not found **\n", msgid);
+                break;                  /*  Message not found in file */
+              }
+            if ((isdigit (*msgline))
+            && (atoi (msgline) == msgid))
+              {
                 lastid = msgid;
                 break;
-            }
-        }
-    }
+              }
+          }
+      }
     /*  Remove first four digits of message */
-    memmove(msgline, msgline + 4, strlen(msgline) - 3);
+    memmove (msgline, msgline + 4, strlen (msgline) - 3);
     /*  Remove leading space, if any */
-    if (msgline[0]) {
-        memmove(msgline, msgline + 1, strlen(msgline));
+    if (msgline [0]) {
+        memmove (msgline, msgline + 1, strlen (msgline));
     }
 
     /*  Append system message if reqd */
-    if (*msgline && strlast(msgline) == '$') {
-        strlast(msgline) = 0;
-        strcat(msgline, ": ");
-        strcat(msgline, strerror(errno));
+    if (*msgline && strlast (msgline) == '$') {
+        strlast (msgline) = 0;
+        strcat  (msgline, ": ");
+        strcat  (msgline, strerror (errno));
     }
 
     /*  Kill newline at end of line */
-    if (*msgline && strlast(msgline) == '\n') {
-        strlast(msgline) = 0;
+    if (*msgline && strlast (msgline) == '\n') {
+        strlast (msgline) = 0;
     }
 }
 
-Bool TraceState = FALSE;                                   /*  Initial default */
-FILE *TraceFile = NULL;                                    /*  Trace file stream */
+Bool TraceState = FALSE;                /*  Initial default */
+FILE *TraceFile = NULL;                 /*  Trace file stream */
 
 /*-----------------------------.
  |  EnableTrace                |
@@ -1759,12 +1758,11 @@ FILE *TraceFile = NULL;                                    /*  Trace file stream
  |  trace file if defined using SetTraceFile ().                             |
  `--------------------------------------------------------------------------- */
 
-void EnableTrace(
-    void
-)
+void EnableTrace (void)
 {
     TraceState = TRUE;
 }
+
 
 /*-----------------------------.
  |  DisableTrace               |
@@ -1775,12 +1773,11 @@ void EnableTrace(
  |  have no effect.                                                          |
  `--------------------------------------------------------------------------- */
 
-void DisableTrace(
-    void
-)
+void DisableTrace (void)
 {
     TraceState = FALSE;
 }
+
 
 /*-----------------------------.
  |  SetTraceFile               |
@@ -1795,20 +1792,18 @@ void DisableTrace(
  |  at the value of TraceFile, which is left null if errors occur.           |
  `--------------------------------------------------------------------------- */
 
-void SetTraceFile(
-    char *filename,
-    char mode
-)
+void SetTraceFile (char *filename, char mode)
 {
     if (TraceFile) {
-        FileClose(TraceFile);
+        FileClose (TraceFile);
         TraceFile = NULL;
     }
 
     if (filename) {
-        TraceFile = FileOpen(filename, mode);
+        TraceFile = FileOpen (filename, mode);
     }
 }
+
 
 /*-----------------------------.
  |  Trace                      |
@@ -1821,17 +1816,14 @@ void SetTraceFile(
  |  given a newline automatically.                                           |
  `--------------------------------------------------------------------------- */
 
-void Trace(
-    char *format,
-    ...
-)
+void Trace (char *format, ...)
 {
-    va_list argptr;                                        /*  Argument list pointer */
+    va_list argptr;                     /*  Argument list pointer */
 
-    if (TraceState) {
-        va_start(argptr, format);                          /*  Start variable args processing */
-        vsprintf(error_text, format, argptr);
-        va_end(argptr);                                    /*  End variable args processing */
-        fprintf((TraceFile ? TraceFile : stdout), "%s\n", error_text);
+    if (TraceState)      {
+        va_start (argptr, format);      /*  Start variable args processing */
+        vsprintf (error_text, format, argptr);
+        va_end (argptr);                /*  End variable args processing */
+        fprintf ((TraceFile? TraceFile: stdout), "%s\n", error_text);
     }
 }
