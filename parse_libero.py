@@ -9,7 +9,7 @@ logger = logging.Logger("")
 if __name__ == "__main__":
     files = [
         # "t1.l",
-        "src/install.l",
+        "src/Install/install.l",
         "src/lrcalcd.l",
         "src/lrcoded.l",
         "src/lrevald.l",
@@ -36,7 +36,7 @@ if __name__ == "__main__":
         for file in files:
             lfp = LiberoFsmParser(file=file)
             _ = lfp
-            # print(lfp.as_yaml())
+            print(lfp.as_yaml())
             # print(lfp.options)
             sys.exit(0)
 

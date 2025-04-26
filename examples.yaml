@@ -1,0 +1,99 @@
+file: src/Install/install.l
+options:
+    schema: -schema=lrschema.ksh
+first_state: After-Init
+libero_fsm:
+    After-Init:
+        super: []
+        events:
+            Ok:
+                next_state: Have-Package
+                action_list:
+                - What-System-Are-We-On
+                - What-Package-Do-We-Have
+    Have-Package:
+        super: []
+        events:
+            Source:
+                next_state: Before-Action
+                action_list:
+                - Get-Source-Install-Action
+            Binary:
+                next_state: Before-Action
+                action_list:
+                - Get-Binary-Install-Action
+            Error:
+                next_state: __SELF__
+                action_list:
+                - Return-Error-Feedback
+                - Terminate-The-Program
+    Before-Action:
+        super: []
+        events:
+            Build:
+                next_state: Have-Install-Directory
+                action_list:
+                - Check-All-Files-Exist
+                - Compile-All-Subroutines
+                - Link-Main-Programs
+                - Get-Directory-Name
+            Install:
+                next_state: Have-Install-Directory
+                action_list:
+                - Get-Directory-Name
+            Delete:
+                next_state: Have-Delete-Directory
+                action_list:
+                - Get-Directory-Name
+            Cleanup:
+                next_state: Have-Package
+                action_list:
+                - Clean-Up-Directory
+                - What-Package-Do-We-Have
+            Error:
+                next_state: Have-Package
+                action_list:
+                - What-Package-Do-We-Have
+    Have-Install-Directory:
+        super: []
+        events:
+            Ok:
+                next_state: Have-Package
+                action_list:
+                - Check-Directory-Writable
+                - Install-Product-Files
+                - What-Package-Do-We-Have
+            Current:
+                next_state: Have-Package
+                action_list:
+                - What-Package-Do-We-Have
+            Error:
+                next_state: Have-Install-Directory
+                action_list:
+                - Get-Directory-Name
+    Have-Delete-Directory:
+        super: []
+        events:
+            Ok:
+                next_state: Have-Package
+                action_list:
+                - Check-Directory-Writable
+                - Delete-Product-Files
+                - What-Package-Do-We-Have
+            Error:
+                next_state: Have-Delete-Directory
+                action_list:
+                - Get-Directory-Name
+    Defaults:
+        super: []
+        events:
+            Error:
+                next_state: __SELF__
+                action_list:
+                - Return-Error-Feedback
+                - Terminate-The-Program
+            Quit:
+                next_state: __SELF__
+                action_list:
+                - Terminate-The-Program
+
