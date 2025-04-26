@@ -1,0 +1,392 @@
+
+Erbot - The E-Mail Robot
+
+    Written:  96/01/20  Pieter Hintjens
+    Revised:  96/02/30
+
+    I wanted to call this erobot but my fingers kept typing 'erbot', and I
+    guess they should know.  So it's 'erbot'.
+
+    Copyright (c) 1996 Pieter Hintjens, may be freely distributed.
+
+
+What Does Erbot Do?
+
+    To use Erbot you need a UNIX account which receives e-mail and which
+    supports the .forward function.  Type 'man forward' if you are not sure
+    about this.
+
+    The forward function passes all incoming mail to another address, or
+    (useful, useful!) a specific program or command.  We install Erbot so
+    that it gets (at least a copy of) all incoming mail.
+
+    Erbot does various things that I find useful time savers.  First of all,
+    it will run commands for you on the local UNIX system.  This seems silly;
+    after all you can always telnet to the system and run commands yourself...
+    Well, sometimes this is not allowed.  For example, some systems only have
+    an e-mail connection to the outside world, for security or cost reasons.
+    Other systems provide you with e-mail and ftp space, but no interactive
+    sessions.  Erbot gets you around such limitations, albeit in a primitive
+    manner.  No matter!  You can run essential commands at a distance.
+
+    The second great Erbot feature is its mail file server.  This is again a
+    simple thing, but useful too.  Imagine you are trying to download some
+    fantastic file, but the ftp server is permanently occupied.  Maybe you
+    give up?  What if you're the supplier and it's your potential clients
+    that are giving up?  Not good for business, heh.  Okay, the e-mail will
+    always get through: Erbot will find a specific file and return it to the
+    sender as a uuencoded file.
+
+    The third of Erbot's list of features is e-mail rerouting.  Sometimes
+    you can arrange things so that lots of different e-mail aliases get sent
+    to the same account.  You can have a virtual organisation with 'sales',
+    'webmaster', and 'highguru' all being sent to 'joe@mysystem.com'.  It
+    is nice to be able to resend incoming mail depending on the alias.
+    Erbot supports this by using a routing file that lists the recipient(s)
+    for any particular aliased message.
+
+    [Note: this feature only works if you can run as a secure user; i.e.
+    if you are a sysadmin.]
+
+
+How Do I Use Erbot?
+
+    Include Erbot in the .forward file like this:
+
+        ,"|erbot"                           - Erbot is executable script
+        ,"|awk -f erbot"                    - run through awk
+        ,"|(cd /some/dir; awk -f erbot)"    - set directory, then run
+
+    The actual command depends on how your mail forwarding works; I have used
+    systems where the current directory was already correct; on others I had
+    to do a 'cd' first.  Note that Erbot uses NAWK or GAWK features; you may
+    have to change 'awk' by 'nawk' or 'gawk' to run it on your system.
+
+    This is an example of a .forward file that sends all incoming mail to
+    joe@mysystem.com and also to Erbot:
+
+        joe@mysystem.com,"|(cd /home/users/joe; nawk -f erbot)"
+
+    These features (remote commands, e-mail file serving, e-mail bouncing)
+    are described by standard protocols that Erbot implements.  I describe
+    these protocols in the next sections.
+
+
+What Does Erbot Need?
+
+    Erbot needs these UNIX programs:
+
+        nawk or gawk
+        mail or an equivalent
+        sendmail or an equivalent
+
+
+Erbot Remote Command Entry Protocol (RCEP) Support
+
+    RCEP is a protocol for running commands by e-mail.  (This protocol is
+    not yet an internet standard.)  RCEP works by defining a specific
+    'Subject:' line of the format:
+
+        Subject: rcep <password> [command [arguments...]]
+
+    RCEP is password protected so that only authorised users can run commands
+    on the host system.  The password is a single word.  If the password is
+    wrong, the message is ignored without any feedback.  This is to make RCEP
+    more secure; as a hacker, you don't know that RCEP is running.
+
+    These are the RCEP commands:
+
+        Subject: rcep <password> [run]
+            Runs a series of commands contained in the message body.  Returns
+            the accumulated output for the commands.  Note that the Bourne
+            shell (/bin/sh) is normally used to run the commands.  If no
+            command is specified, run is the default.
+
+        Subject: rcep <password> put [result]
+            Takes the message body, and uudecodes it.  If 'result' is given,
+            moves the resulting file to this filename or location.
+
+        Subject: rcep <password> get filename
+            Reads the specified file, uuencodes it, and returns it in the
+            message body.  The filename must be fully specified (i.e. with
+            path if necessary).
+
+        Subject: rcep <password> clone
+            Returns the source code for the RCEP server.
+
+        Subject: rcep <password> version
+            Returns version and help information for the RCEP server.
+
+    The word 'rcep' and the command are case-insensitive.  The password and
+    arguments are case-sensitive.
+
+    The RCEP server returns a message:
+
+        Subject: re: rcep command - ok|error
+        where the body of the message is the captured output of the commands
+        executed.
+
+
+Erbot E-Mail File Transfer Protocol (EMFTP) Support
+
+    EMFTP is a protocol for downloading files by e-mail.  (This protocol is
+    not yet an internet standard.)  EMFTP works by defining a specific
+    'Subject:' line of the format:
+
+        Subject: emftp command [arguments...]
+
+    EMFTP is not password protected, since the purpose is to allow anyone
+    to access files.  The files must be world-readable: otherwise the EMFTP
+    server refuses to download them.
+
+    These are the EMFTP commands:
+
+        Subject: emftp get filename [text | binary]
+            EMFTP looks for the file and returns it either literally or
+            encoded using uuencode.  To locate the file, EMFTP starts at the
+            EMFTP_ROOT location and finds all files that match the specified
+            filename.  The filename should not include a path.  If you use
+            * or ? in the filename, EMFTP may return several files, each as
+            a separate message.  If several files under EMFTP_ROOT have the
+            same name, one get command will retrieve them all.  This will be
+            a little painful to decode.  EMFTP only returns files that are
+            world-readable.
+
+            The binary argument tells EMFTP to uuencode the file.  This is
+            the default.  The text argument tells EMFTP to transmit the file
+            as-is.
+
+    The word 'emftp' and the command are case-insensitive.  The filename is
+    case-sensitive (normally lower-case for a UNIX host system).  The text
+    argument is case insensitive.
+
+    The EMFTP server returns a message:
+
+        Subject: re: emftp get filename - ok
+            where the body of the message is the uuencoded file
+        Subject: re: emftp get filename - not found
+
+
+Erbot E-Mail Routing Protocol (EMRP) Support
+
+    This feature is enabled by the presence of a routing file.  When
+    you create this file, Erbot looks at the 'To:' address of each mail
+    and re-sends the mail following the contents of the routing file.
+
+    The routing file can have any name.  This name is defined in the
+    erbot.ini file.  You should protect this file from anonymous ftp
+    access (mode 600).
+
+    EMRP is only useful if your account receives mail for lots of aliases.
+    Sometimes this is the way an account is configured; sometimes you can
+    set things up like this.
+
+    EMRP looks at the user-name before '@' in the "To:" line.  The rest of
+    the address is not important.  When EMRP routes mail, the recipient
+    gets the original message, with all headers intact, except possibly
+    for added routing information.
+
+    This is an example of a routing file:
+
+    #   emrp.ini    Erbot routing file (optional)
+
+    #   Messages for 'help' and 'admin' are routed to ph@mymail.com
+    #   ---------------------------------------------------------------------
+        help
+        admin       ph@mymail.com
+
+    #   Messages for 'sales' are routed to ph@mymail.com and alex@imatix.com
+    #   ---------------------------------------------------------------------
+        sales       ph@mymail.com, alex@imatix.com
+
+    #   Messages for 'project' are routed to the addresses in project.lst
+    #   ---------------------------------------------------------------------
+        project     &project.lst
+
+    #   Messages for 'operator' and 'rcep' are handled internally by RCEP
+    #   ---------------------------------------------------------------------
+        operator
+        rcep        *rcep
+
+    #   Messages for 'fileserv' and 'emftp' are handled internally by EMFTP
+    #   ---------------------------------------------------------------------
+        fileserv
+        emftp       *emftp
+
+    #   Any other messages are sent to inbox@imatix.com
+    #   ---------------------------------------------------------------------
+        -           inbox@imatix.com
+
+    Each line starts with an alias, and then lists zero or more addresses,
+    which may be separated by spaces.  If an alias has no address list, it
+    falls through to the next alias.  If an address starts with '&', EMRP
+    uses the remaining text as a filename, and reads this file.  This is
+    a simple way of maintaining mailing lists.  The file mut contain one
+    address per line, in RFC XXXX format:
+
+        name@domain
+    or  Person's Full Name <name@domain>
+
+    The addresses '*rcep' and '*emftp' are special.  These tell Erbot to
+    route the message to the corresponding protocol handler (which is part
+    of Erbot in this implementation: it could be an external command).
+
+    The last alias must be '-'; this catches any unmatched messages.  If
+    you don't put this in you will lose any such messages.  Actually, if
+    EMRP cannot match a message it adds it to the lost letter basket and
+    logs the error.
+
+    Caveat: so far, I've not found a way to implement EMRP nicely.
+
+
+The erbot.ini Configuration File
+
+    Erbot reads this file when it starts-up.  You use this file to change
+    default parameters such as the e-mail address of the Erbot administrator.
+    The erbot.ini file must be in the current working directory where Erbot
+    runs.  The configuration file contains comments (lines starting with #),
+    blank lines, and argument lines.  An argument line is of the format:
+    keyword = value, or keyword = "value".  The keyword must start in the
+    left-hand margin.  You cannot put comments after the value.
+
+    These are the keywords that Erbot accepts, shown with their default
+    values:
+
+    ERBOT_LOGFILE = erbot.log
+
+        Erbot's log file; for logging error messages.  If this filename is
+        empty ("") no errors are logged.
+
+    ERBOT_ADMIN = ""
+
+        E-mail address of Erbot administrator.  When Erbot logs a serious
+        error it also sends this to the administrator (if not "").  Such
+        errors indicate a problem with Erbot's configuration.  You should be
+        *very* careful about sending administrator messages back to Erbot in
+        any way; this can set-up a loop whereby each message generates a
+        fatal error message.
+
+    RCEP_PASSWORD = password
+
+        The remote user has to supply this password to use RCEP.  Since the
+        password is clearly visible in the .ini file, this file must be
+        protected from public access (i.e. give it access mode 600).
+
+    RCEP_LOGFILE = rcep.log
+
+        RCEP logs each session it runs, including the From: address.
+        When RCEP runs a local command, it also logs these commands.
+        If this filename is empty (""), RCEP sessions are not logged.
+
+    EMFTP_ROOT = pub
+
+        EMFTP accesses files starting at this point in the directory tree.
+        To protect a file from EMFTP access, put is in a directory outside
+        this root.  Files below this root must anyway be world-readable.
+
+    EMFTP_LOGFILE = emftp.log
+
+        EMFTP logs each session, including the From: address.  If this
+        filename is empty (""), EMFTP sessions are not logged.
+
+    EMRP_ROUTING = ""
+
+        Name of routing file, relative from directory where Erbot runs.
+        If this is not empty, the EMRP is used to handle incoming mail.
+
+    EMRP_LOGFILE = emrp.log
+
+        EMRP logs each routed message, including From: and To:.  If this
+        filename is empty (""), routed messages are not logged.
+
+    EMRP_BASKET = emrp.err
+
+        Name of lost letter basket; Erbot adds any unroutable mail to this
+        file.  This file can grow.
+
+    DIR_COMMAND = "ls -l"
+
+        Commands that lists files with permissions.  The permissions must be
+        the first 9 letters of the line.  This is the horrible way Erbot
+        uses to check that a file is actually world-readable.
+
+    DEL_COMMAND = "rm -f"
+
+        Command to forcefully delete a file.  Some installations add a
+        confirmation to the rm command.  This is a problem for Erbot since
+        it runs in the background.
+
+    MAIL_COMMAND = "mail -s"
+
+        Command that can mail a file, adding the full RFC 822 header.  Must
+        accept the following syntax:
+
+            <MAIL_COMMAND> subject address < file
+
+        Usually "mail -s" or "mailx -s".
+
+    RAWMAIL_COMMAND = sendmail
+
+        Command that can mail a file which already has a full header.  Must
+        accept the following syntax:
+
+            <RAWMAIL_COMMAND> address < file
+
+
+Normal and Error Logging
+
+    Each of the protocols (RCEP, EMFTP, EMRP) keep a log of their activities.
+    Additionally, Erbot logs any serious errors and sends these to the Erbot
+    administrator if such is defined.
+
+    These are the serious errors that Erbot and its protocols detects:
+
+        Erbot: Bad keyword 'xxxx' in .ini file
+        Erbot: Routing file 'xxxx' not found
+        Erbot: Unknown internal protocol '*xxxx'
+        EMRP:  No recipient found for address
+
+    These errors result in a return message to the sender:
+
+        EMRP:  Internal routing conflicts with Subject: line
+        RCEP:  Bad password
+        RCEP:  Bad command
+        RCEP:  Specified file not found for download
+        RCEP:  No 'begin' in uploaded file
+        EMFTP: Bad command
+        EMFTP: Specified file not found for download
+
+
+What Else Should I Know?
+
+    Erbot technical aspects: I wrote Erbot using a code-generator called
+    Libero.  This generates code frameworks from a finite-state 'dialog'.
+    The first version of Erbot was a plain awk program; once it was more
+    than a trivial program it became a pain to maintain.  The Libero'd
+    version is somewhat larger, but much simpler to understand.  If you
+    want to change Erbot, you'll need to get hold of Libero.  Drop a line
+    to me at pieter@imatix.com, or point your browser at www.imatix.com
+    for leads to Libero.  I can highly recommend Libero for all kinds of
+    work, except perhaps dentistry.  Then, I wrote it, so I may be biased.
+    Libero is free GNUish software.
+
+    Erbot is not a daemon.  That is, if you install it on a system, the
+    sysop will not notice a thing unless something goes weirdly wrong.
+    You don't need root access, and you don't need to program tcp/ip to
+    set-up a server like Erbot.
+
+    The protocols that Erbot supports are NYAIS (not yet an internet
+    standard).  These protocols are my own invention and intended for
+    free use.  There is a strict separation between Erbot and these
+    protocols: you could easily make a simpler program that supported just
+    one of the protocols.  Erbot is complex because it supports them all.
+    If you change the protocols, watch out for the famous looping mail
+    syndrome: since Erbot looks for particular Subject: lines, it is easy
+    to send a message that triggers a new Erbot action, and so on forever.
+
+    I chose to write Erbot in Awk, rather than Perl, because awk is more
+    available.  Okay, Perl is pretty widespread, but you can't always be
+    sure that it is available on a system where you can't install your own
+    programs.  Awk has always been there, so far.  Hey, I'm working on a
+    Perl version too.
+

@@ -1,0 +1,1145 @@
+<HTML><HEAD><!--Revised: 7 Jul, 1998 By: Pieter Hintjens-->
+<TITLE>Htmlpp Reference</TITLE></HEAD>
+<BODY BACKGROUND="newstone.gif">
+<TABLE WIDTH=100%><TR><TD ALIGN=LEFT>
+ | <A HREF="/index.htm"> iMatix home page</A><BR>
+ | <A HREF="index.htm"> htmlpp home page</A><BR>
+ | <A HREF="index.htm">&lt;&lt;</A> | <A HREF="index2.htm">&lt;</A>
+ | <A HREF="index4.htm">&gt;</A> | <A HREF="index5.htm">&gt;&gt;</A>
+<TD ALIGN=RIGHT>
+<IMG SRC="htmlpp1.gif" ALT="htmlpp" WIDTH=100 HEIGHT=75 ALIGN=RIGHT HSPACE=10>
+<FONT SIZE=4><B>htmlpp</B><BR><FONT SIZE=2>Version 4.0g
+</TABLE>
+<HR>
+
+<H2><A NAME="TOC8">Htmlpp Reference</A></H2>
+
+<H3><A NAME="TOC9">Description</A></H3>
+
+<P>Htmlpp is a preprocessor for HTML files, and is intended to simplify the
+task of maintaining large sets of HTML documents. You provide htmlpp with a
+document that is a mix of HTML-tagged text and htmlpp commands. Htmlpp
+generates a set of HTML files from that document.
+
+<H3><A NAME="TOC10">Command-line Syntax</A></H3>
+
+<P>To run htmlpp, use the following syntax:
+<PRE>htmlpp [-option...] filename ...
+</PRE>
+<P>Where <EM>filename</EM> is assumed to have an extension '.txt' if
+necessary.  You can use these command-line options:
+<UL>
+<LI>The -debug option causes htmlpp to leave all its intermediate
+work files lying around.
+<LI>The -guru option makes htmlpp work in guru mode, which is explained in
+the <A HREF="index3.htm#guru">guru mode</A> section.
+<LI>The -env option tells htmlpp to include the current environment in the
+symbol table.
+<LI>The -nofunc option disables checking of intrinsic functions; this can be
+useful if your input text contains Perl code (which can itself contain lots
+of functions prefixed by '&'.
+<LI>The -page option lets you select one or more pages to generate. If you do
+not use this option, htmlpp's default action is to generate every page in
+the document. You can generate the first page only by using this command:
+<PRE>htmlpp -page 1 xxxx
+</PRE>
+You can generate a series of specific pages too:
+<PRE>htmlpp -page 1,9-10,15 xxxx
+</PRE>
+You can also refer to page file names, instead of page numbers (but not
+using the 'nn-nn' syntax:
+<PRE>htmlpp -page justhis.htm,andthat.htm xxxx
+</PRE>
+</UL>
+
+<H3><A NAME="TOC11">Inserting Symbols</A></H3>
+
+<P>Htmlpp replaces symbols in command lines and HTML text. You can specify a
+symbol in various ways:
+
+<DL>
+<DT>$(name)
+<DD>Inserts the symbol <EM>name</EM>.  If the symbol is not
+defined (see .define command below) you get an error message.
+
+<DT>$(name?default)
+<DD>Inserts the symbol <EM>name</EM>.  If the symbol is not
+defined, inserts the supplied default value.
+
+<DT>$(*name)
+<DD>Inserts an link for the symbol <EM>name</EM>.  This is
+shorthand for:
+<PRE>&lt;A HREF="$(name)"&gt;name&lt;/A&gt;.</PRE>
+If the symbol <EM>name</EM> has an empty value, the &lt;A...&gt;
+and &lt;/A&gt; tags are left-out - i.e. the link is not
+active.
+
+<DT>$(*name=label)
+<DT>$(*name="label")
+<DD>Inserts an link for the symbol <EM>name</EM>, with label as
+specified. This is shorthand for:
+<PRE>&lt;A HREF="$(name)"&gt;label&lt;/A&gt;.</PRE>
+If the symbol <EM>name</EM> has an empty value, the &lt;A...&gt;
+and &lt;/A&gt; tags are left-out. You can use double quotes if the
+label itself contains ')'.
+
+<DT>$(*name=)
+<DD>Inserts an link for the symbol <EM>name</EM>, with the full
+reference as label.  This is shorthand for:
+<PRE>&lt;A HREF="$(name)"&gt;$(name)&lt;/A&gt;.</PRE>
+
+<DT>&(Perl program fragment)
+<DD>Replaces the symbol by the output of the specified Perl code.
+The Perl code is executed using the eval command -- see your Perl
+documentation if you want to use this feature.  This is how to
+replace the symbol by the output of a Perl program:
+&(`perl <EM>program</EM>`).  You must enclose the program fragment
+in double quotes if it contains ( or ), or else escape these
+characters using '\'.
+
+<DT>&name(arguments)
+<DD>Replaces the symbol by the result of an
+<A HREF="index3.htm#intrinsic">intrinsic function</A>.  These are predefined functions
+that htmlpp provides for various purposes.
+
+<DT>%(variable)
+<DD>Replaces the symbol by the value of an environment variable.
+If the variable does not exist, inserts an empty value.  For
+portability, always define environment variables in uppercase.
+
+<DT>%(variable?default)
+<DD>Replaces the symbol by the value of an environment variable.
+If the variable does not exist, inserts the specified default value.
+For portability, always define environment variables in uppercase.
+
+<DT>\(
+<DD>Replaces this by "(".  This is to 'escape' symbol definitions so
+that they are not translated.
+
+<DT>\.
+<DD>Replaces this by ".".  This is to 'escape' dots so that they are
+not interpreted as commands, at the start of a line.
+</DL>
+
+<P>You can define symbols in terms of symbols: $($(name)) is
+quite okay, if you know what you are doing.  Htmlpp inserts
+symbols from right to left in the line.
+
+<H3><A NAME="TOC12">Types of Symbol</A></H3>
+
+<P>Symbols are of various types
+<UL>
+<LI>htmlpp provides various symbols when building certain blocks
+like the table of contents;
+<LI>htmlpp provides various symbols containg default values that
+you can redefine if necessary;
+<LI>you can define symbols using the .define command;
+<LI>you can define symbols using the .build anchor command.
+</UL>
+
+<H3><A NAME="TOC13">Standard Symbols</A></H3>
+
+<P>Htmlpp provides these standard symbols for use at any point in
+the document:
+<DL>
+<DT>$(DATE)
+<DD>The date that htmlpp started, formatted as an 8-character
+string: YY/MM/DD.
+<DT>$(TIME)
+<DD>The time that htmlpp started, formatted as an 8-character
+string: HH:MM:SS.
+<DT>$(DOCBASE)
+<DD>The main document filename, without extension.
+<DT>$(INC)
+<DD>A counter, which starts at zero and is bumped-up each time you
+refer to it.  I use this to number filenames, in the .page
+command.  The first time you use $(INC), it is empty - i.e. "".
+The second time it is "1", then "2", "3", "many", "manymany", and
+"manymanymany" (joke, sorry).
+<DT>$(PAGE)
+<DD>After a .page command, this holds the page filename, exactly
+as specified in the .page command.
+<DT>$(TITLE)
+<DD>After a .page command, this holds the page title.  It is nice
+to use this in the header block.
+<DT>$(PIPE_TITLE)
+<DD>After a .pipe command, this holds the pipe title.  It is nice
+to use this in the pipe_header block.
+<DT>$(PASS)
+<DD>Contains either 0 or 1, depending on whether htmlpp is
+scanning for titles (0) or building the output files (1).
+</DL>
+You may want to (re).define some of these symbols:
+<DL>
+<DT>$(BASE)
+<DD>Defined as "doc".  This is used in .page commands for
+automatic filename generation.
+<DT>$(EXT)
+<DD>Defined as "htm", and commonly-used hot on the heels of a
+$(BASE).
+<DT>$(SILENT)
+<DD>Defined as 0.  If you .define this as 1, htmlpp will try to be
+a bit quieter.  When you are generating *lots* of pages, it is
+easy to lose real warnings and errors amidst the information
+messages.
+<DT>$(LINEMAX)
+<DD>Defined as 79.  Htmlpp warns if it finds longer lines.  If
+you don't want to see these warnings, set it to 0.
+<DT>$(DEBUG_MODE)
+<DD>Has the value 1 when htmlpp is operating in debug mode, and 0
+otherwise.  To switch into debug mode, use the -debug command-line
+<DT>$(Hn)
+<DD>Where 'n' is 1 to 9, defines a header level number.  You would
+use this to generate headers like this:
+<PRE>1
+1.1
+1.2
+1.2.1
+1.2.2 ... etc.
+</PRE>
+Htmlpp automatically manages the numbering of header levels.  You
+are, however, limited to the 'dotted number' syntax.
+</DL>
+Unless you use .ignore pages, these symbols are available in
+header and footer blocks (you can use them elsewhere, but you'll
+get warnings):
+<DL>
+<DT>$(FIRST_PAGE)
+<DD>The filename for the first page of the document.
+<DT>$(LAST_PAGE)
+<DD>The filename for the last page of the document.
+<DT>$(NEXT_PAGE)
+<DD>The filename for the next page of the document.
+<DT>$(PREV_PAGE)
+<DD>The filename for the previous first page of the document.
+<DT>$(FIRST_TITLE)
+<DD>The title for the first page of the document.
+<DT>$(LAST_TITLE)
+<DD>The title for the last page of the document.
+<DT>$(NEXT_TITLE)
+<DD>The title for the next page of the document.
+<DT>$(PREV_TITLE)
+<DD>The title for the previous first page of the document.
+</DL>
+<P>In addition, htmlpp will include the current environment symbols
+if you run it with the -env option.  You can use this (although I
+don't see the utility immediately) to redefine any of the standard
+symbols such as $(EXT). Remember that you can also access any of
+the environment symbols using the %(...) syntax; e.g. %(PATH).
+
+<H3><A NAME="TOC14">Htmlpp Commands</A></H3>
+
+<P>A htmlpp command starts with a dot, in column 1, followed by a
+keyword.  You can put spaces between the dot and the keyword.  To
+continue the command line over the next line, end the line with a
+hyphen (though you need to at least put the dot and the keyword on
+the same line.  Commands can be in upper- or lower-case: .endblock
+and .EndBlock are equivalent.
+
+<P>These are the commands that htmlpp understands:
+
+<DL>
+<DT>.define <EM>symbol</EM> [<EM>value</EM>]
+<DD>Define a symbol with the specified value.  The symbol name can
+consist of letters, digits, -, ., and _.  The value is everything
+else up to the end of the line.  If you omit the value, the
+variable is un-defined.  You can redefine a variable as often as
+you like simply by repeating the .define command.  Use lowercase
+for your own symbols.  Predefined htmlpp symbols are uppercase.
+Case is significant.  You can assign values to the built-in htmlpp
+variables like INC if you want to.  In some cases this is even
+useful.
+
+<DT>.define <EM>symbol</EM> = <EM>expression</EM>
+<DD>Evaluates the expression and stores the result in symbol.
+Note that you must use '=' to evaluate an expression.  Otherwise
+the expression is considered as a string and stored as-is in the
+symbol.  Htmlpp passes the expression to Perl for evaluation, so
+you can use any valid Perl syntax.  If you want your htmlpp files
+to be portable to (future) non-Perl implementations of htmlpp,
+restrict the expressions to simple arithmetic (+, -, *, /, and
+parentheses).  This is an example:
+<PRE>.define count = 1
+.echo $(count)
+.define count = $(count) + 1
+.echo $(count)
+</PRE>
+Of course it helps to know that htmlpp will evaluate all
+variables before passing the expression to Perl to work out.
+So, the second .define is evaluated as '1 + 1'.  If you decide
+to rely on Perl (a good bet for now), you can use the
+<B>.define =</B> command to execute shell commands, e.g.:
+<PRE>.if $(PASS)
+.  define junk = system "rm *.htm";
+.endif
+</PRE>
+
+<DT>.define <EM>symbol++</EM> <EM>initial_value</EM>
+<DD>Creates or re-initialises a counter with the initial value.
+Each time you use the counter symbol, it is incremented.  The
+$(INC) symbol is actually defined internally like this:
+<PRE>.define INC++ ""</PRE>
+Note that the empty string is treated as zero; the next time
+the symbol will be '1'.  You can also use '--' after the symbol
+name to subtract one from its value each time it is used.  You
+can stick the '++' or '--' before the symbol name: then the
+symbol is incremented or decremented <EM>before</EM> its value
+is taken.<BR>
+The .define statement is resolved as late as possible: if the
+statement refers to other variables, these are inserted when
+the .define'd variable is used, rather than when it is defined.
+For instance if you refer to a .define'd variable in the page
+header, it will be re-evaulated each time the page header is
+output.
+
+<DT>.macro [-nosplit|-noquote] <EM>name</EM> <EM>macro-body</EM>
+<DD>Defines or redefines a macro. The macro body can go over several lines;
+end each continuation line with '-'. When htmlpp outputs a macro, it
+replaces <EM>arguments</EM> in the body with values you supply at the time.
+The arguments are $1 to $9 and $*, which work as follows: $1 to $9 are the
+first to ninth argument you supply; $* is the whole string of arguments. If
+the macro body is "", the macro is given an empty body. Otherwise, any
+quotes you use will be included in the macro body as-is. If you use the
+-nosplit option before the macro name, the macro will only ever have one
+argument, $1. Without this option, macro arguments are split on whitespace,
+with quotes and apostrophes being used to group arguments. See the section
+on <A HREF="index3.htm#macros">macros</A> for details.  The -noquote option automatically escapes quotes
+in the macro arguments.
+
+<DT>.include <EM>filename</EM>
+<DD>Start reading from the specified file.  You can nest .include
+files as much as you like.  Htmlpp checks for circular references.
+If the same file was already included earlier, htmlpp ignores the
+command, like the Perl 'require' operator.  Htmlpp searches along
+the LIBPATH environment variable for the file. If you specify a
+filename with a full path, htmlpp won't search the LIBPATH.  If
+htmlpp can't find the document using LIBPATH, it'll search PATH too.
+
+<DT>.include <EM>filename</EM>!
+<DD>Include the file in any case, like a C #include directive.
+
+<DT>.include <EM>`command`</EM>
+<DD>Execute 'command' and include the output of the command in the
+generated HTML text.  The command can be any program with
+arguments; it should respect any operating system conventions or
+limitations.  The output text can contain htmlpp symbols in the
+normal manner.  It cannot contain htmlpp commands.
+
+<DT>.page <EM>filename</EM> = ["]<EM>title</EM>["]
+<DD>Start writing a new HTML file.  The title is required.  At any
+point after the .page, you can refer to $(PAGE) and $(TITLE) for
+the current file name and title.  For instance, you'll often see
+this:
+<PRE><EM>&lt;H1&gt;</EM>$(TITLE)<EM>&lt;/H1&gt;</EM></PRE>
+
+<DT>.page ["]<EM>title</EM>["]
+<DD>Equivalent to .page $(BASE)$(INC).$(EXT) =
+"<EM>title</EM>".  Just easier.
+
+<DT>.pipe <EM>filename</EM>=<EM>title</EM>
+<DD>Tells htmlpp to create a secondary file, as specified, and to send
+output there as well as to the primary file specified by the last .page
+command.  The .pipe command is useful when you want to send part of a HTML
+page into another file, for instance to generate a small readme.htm file for
+an installtion.  The piped file is prefixed by the PIPE_HEADER block and
+ended with the PIPE_FOOTER block, if these are defined.
+
+<DT>.ignore header
+<DD>Ignore the next header line as far as the table of contents is
+concerned.  This is good for headers like &lt;H2&gt;Table of
+Contents&lt;/H2&gt;.
+
+<DT>.ignore header <EM>level</EM>
+<DD>Ignores all headers with level greater or equal to level.
+This is useful if a section has a lot of H3 and H4's that you
+don't want in the table of contents.  Use .ignore header 99 to re
+include all further headers.
+
+<DT>.ignore pages
+<DD>Ignore all .page commands except to pick-up the page titles.
+Use this when you want to create a super-document.  When you use
+.ignore pages, htmlpp also ignores the .build toc and .build index
+commands. So, if you want a table of contents, do the .build toc
+before you say .ignore pages.  You can also use .if commands to
+skip blocks of text under certain conditions.
+
+<DT>.ignore page
+<DD>Ignore next .page command for any future .build index command.
+This is the right way of keeping the index page itself out of the
+index.  Note that the index page does take part in the general
+page-to-page linking scheme provided by $(PREV_PAGE) and such.
+
+<DT>.if <EM>expression</EM>
+<DT>[.else]
+<DT>.endif
+<DD>If the expression returns a false value, htmlpp skips until
+the .else or .endif line.  You can nest .if blocks.  An .else is
+always part of the closest preceding .if.  Htmlpp passes the
+expression to Perl for evaluation, so you can use any valid Perl
+syntax.  If you want your htmlpp files to be portable to (future)
+non-Perl implementations of htmlpp, restrict your expressions to
+simple arithmetic and logical tests (&lt;, &gt;, =, etc.).
+Otherwise, enjoy Perl's vast range of tests.  This is quite okay:
+<PRE>.if -f myfile.htm</PRE>
+An .if block must be entirely in one line.
+<DD>These are some examples of .if expressions:
+<PRE>.if $(number) == 0</PRE>
+<PRE>.if $(number) != 1</PRE>
+<PRE>.if $(number) > 2</PRE>
+<PRE>.if $(string) eq "value"</PRE>
+<PRE>.if $(string) ne "value"</PRE>
+
+<DT>.block <EM>blockname</EM>
+<DD>Define a piece of HTML text to be output as part of a .build
+command.  You can end the .block with an .endblock or another
+.block.  Htmlpp knows about these block names:
+<DL>
+<DT>header
+<DD>Output at the start of each new HTML page; i.e. whenever you
+use a .page command.
+
+<DT>footer
+<DD>Output at the end of each HTML page.
+
+<DT>toc_open
+<DD>Output at the start of a .build toc block (see below), and
+whenever htmlpp decides to indent a new level.
+
+<DT>toc_entry
+<DD>Output for each entry in the table of contents.  Use these
+symbols: $(TOC_HREF) - the local URL for the file and section;
+$(TOC_TITLE) - the title for the section, taken from the header
+line; $(TOC_LEVEL) - the table-of-contents level, 1 and higher.
+<DT>toc_close
+<DD>Output whenever htmlpp decides to outdent a level, and at the
+end of the table of contents.
+
+<DT>dir_open
+<DD>Output at the start of a .build dir block (see below).
+
+<DT>dir_entry
+<DD>Output for each entry in a .build dir block.  Use these
+symbols: $(DIR_HREF) - URL for the file; $(DIR_NAME) - the
+filename, left-justified; $(DIR_EXT) - the file extension, always
+put into lowercase; $(DIR_SIZE) - the file size, right-justified;
+$(DIR_DATE) - the file date; $(DIR_TIME) - the file time.  You can
+also use $(DIR_SIZEK) and $(DIR_SIZEM) to get the file size in
+Kbytes and Mbytes, and $(DIR_HREFL) to get the URL for the file in
+lowercase.
+
+<DT>dir_close
+<DD>Output at the end of a .build dir block.
+
+<DT>index_open
+<DD>Output at the start of a .build index block (see below).
+
+<DT>index_entry
+<DD>Output for each entry in a .build index block.  Use these
+symbols: $(INDEX_PAGE) - the filename; $(INDEX_TITLE) - the file
+title.  For compatability with earlier versions, htmlpp also
+accepts the name 'index'.
+
+<DT>index_close
+<DD>Output at the end of a .build index block.
+
+<DT>anchor
+<DD>Output whenever you use a .build anchor.  Use this symbol:
+$(ANCHOR) - name of anchor.
+</DL>
+
+Any other block is treated as a user-defined block and can be
+output at any point using a matching .build command.
+
+<DT>.endblock
+<DD>End the previous .block.  You can end a .block with an
+.endblock or a further .block command. Any other command within
+a .block is interpreted when the block has been generated.
+
+<DT>.block <EM>blockname</EM> local
+<DD>You can follow the .block command by the keyword
+<TT><B>local</B></TT> - this defines a block that will be used
+one time only.  The <TT>local</TT> keyword applies to header,
+footer, and anchor blocks.  Local blocks are used to change the
+way a single page looks, without disturbing the headers and footers
+of the whole document.  Typically, you would define a general
+document header at the start of the document, then a local header
+and footer for a specific .page.  Note that you should define the
+local page footer after the .page command.  If you define a
+local footer block before the first page, htmlpp handles this
+correctly.
+
+<DT>.build toc
+<DD>Build table of contents for document.  Htmlpp scans the
+document and all include files once to collect titles
+(&lt;Hn&gt;...&lt;/Hn&gt;) and once to create the HTML pages.
+Titles (&lt;Hn&gt;...&lt;/Hn&gt;) must be entirely on a single
+line, or htmlpp will not find them.  You can manage the contents
+of the table of contents through the .ignore header command. You
+will normally use a .build toc at the start of a document.
+
+<DT>.build dir <EM>directory</EM> [<EM>filespec</EM>...]
+<DD>Build directory listing as specified.  The .build dir command
+only works if you mirror the server directory on some local disk
+that htmlpp can access.  This is a Good Idea in any case.  Before
+you can use .build dir you must define LOCAL and SERVER.  I define
+these like this:
+<PRE>.define LOCAL   i:/site:
+.define SERVER  http://www.imatix.com</PRE>
+
+The directory must be relative to either of these two.  It should
+start with '/' but not end with '/'.  You can specify zero or more
+filenames or wildcards (htmlpp accepts * and ?, according to UNIX
+rules).  If you specify no filespecs, htmlpp assumes you mean '*'.
+The filespecs can include PERL regular expressions: place the
+filespec between double quotes, e.g. to match all files with 'doc'
+or 'txt' somewhere in the name: .build dir /pub "doc|txt".  An
+example might help:
+<PRE>.define .txt   Text file
+.define .htm   HTML document
+.define .zip   ZIP archive
+.block dir_open
+&lt;PRE&gt;
+.block dir_entry
+$(*DIR_HREF="$(DIR_NAME)") $(DIR_SIZE)  $($(DIR_EXT))
+.block dir_close
+&lt;/PRE&gt;
+.endblock</PRE>
+
+Note the sneaky double-derefencing of $(DIR_EXT) which translates
+the file extension into a comment like 'Text file'.  I usually
+stick all such .defines in a separate .include file,
+filetype.def.
+
+<DT>.build index
+<DD>Build file index for document.  This is basically a list of
+all pages in the document with their titles.  If you use this,
+you may want to put an .ignore page before the .page that starts
+the index page.  It may be useful to do a .build index inside the
+footer of a page -- this is quite okay.
+
+<DT>.build anchor <EM>anchor-name</EM>[=title]
+<DD>Build an anchor definition.  This is useful.  Basically
+you do a '.build anchor somename' in a document, then do a
+$(*somename) or $(*somename="label") anywhere in any other
+document.  Htmlpp saves anchor symbols in the file anchor.def;
+otherwise anchor symbols are treated much like normal .define'd
+symbols.  One difference: anchor symbols and normal symbols do not
+share the same namespace; if you .define a symbol with the same
+name as the anchor symbol, the .define'd symbol takes precedence.
+If you undefine the symbol, the anchor symbol reappears by magic.
+This may or may not be useful, but it is the way it works.  If you
+change the file structure of your document, run everything through
+htmlpp *TWICE*, so that all anchor references can get really
+solidly updated.  You can delete the anchor.def file at any time;
+it is just kept to save some context between runs.  When you use
+the form $(*somename) to refer to an anchor, htmlpp will insert
+the anchor title as the label.
+
+<DT>.build <EM>user_block_name</EM>
+<DD>Output the user-defined block specified.  This is any amount
+of text that you do not want to specifically put into a separate
+file for use with the .include command.  You define the block
+using the .block command.
+
+<DT>.echo [-] <EM>text</EM>
+<DD>Echoes the text to the console.  Strips-off any leading and
+trailing spaces, but you can enclose the text in single or double
+quotes if you want leading/trailing spaces.  Unless you place a
+hyphen before the text, htmlpp adds a newline.
+
+<DT>.for <EM>name</EM> in <EM>item</EM>...
+<DT>.endfor
+<DD>Repeats the text between .for and .endfor, where $(name) has
+the value of each item in the list.  The item list is separated
+by spaces.
+
+<DT>.for <EM>name</EM> in `<EM>command</EM>`
+<DD>Repeats the text between .for and .endfor, where $(name) has
+the value of each line in the output generated by the command.
+The special variables $(1), $(2), and so on will hold each word
+in the line.
+
+<DT>.for <EM>name</EM> in @<EM>filename</EM>
+<DD>Repeats the text between .for and .endfor, where $(name) has
+the value of each line in the specified file.  The special variables
+$(1), $(2), and so on will hold each word in the line.
+
+<DT>.for <EM>name</EM> from <EM>start</EM> to <EM>end</EM>
+<DD>Repeats the text between .for and .endfor, where $(name) has
+a numeric value from <EM>start</EM> to <EM>end</EM> inclusive.
+Htmlpp will count up or down as necessary.
+</DL>
+
+<A NAME="macros">&nbsp;</A>
+<H3><A NAME="TOC15">Htmlpp Macro Processing</A></H3>
+
+<P>Macros are a shorthand way to produce HTML tags and other
+constructs.  This is how I define a macro 'H3':
+<PRE>.macro H3 &lt;H3&gt;$*&lt;/H3&gt;</PRE>
+<P>I use all uppercase names for macros, but this is just a
+convention, since the case is not important.  We can use a macro
+like H3 in three ways:
+<PRE>.H3 some text</PRE>
+<P>or
+<PRE>&lt;!--.H3 some text--&gt;</PRE>
+<P>or
+<PRE>&lt;.H3 some text&gt;</PRE>
+<P>The first form is good for titles and other constructs that
+come naturally on a line by themselves.  Since it uses a syntax
+similar to htmlpp commands, there is a certain danger that a
+macro will conflict with some future command.  This is just too
+bad; the alternative of inventing yet another syntax for macros
+was (for me) a worse choice.  In any case, htmlpp will warn you
+if you try to define a macro that already exists as a command.
+The second form is compatible with HTML editors and some other
+HTML preprocessors, but is frankly a pain to type. The third
+form is good for mark-up tags.  The second and third forms
+suffer from one problem: the whole thing has to come on a single
+line.
+
+<P>When you use a macro like this: &lt;.H3 some text&gt; you are
+supplying <EM>arguments</EM>.  Here we supply two, 'some' and 'text'.
+You can refer to these as $1 and $2 inside the macro definition, or
+together as $*.  Htmlpp can handle quotes correctly, so &lt;.H3
+"some text"&gt; only supplies one argument, $1.  The $+ symbol will
+expand to anything left over after $1, $2, etc.  For instance, if
+you refer to $1 and $3 in the macro body, $+ refers to $4 and
+any remaining arguments.
+
+<P>You can define a macro with a section that repeats for each
+argument.  This is useful if you don't know in advance how many
+arguments you are going to have.  For instance, the standard
+.THEAD macro generates a table heading for one, two, three, or
+more columns.  You specify the repeating section as {...$n...}.
+The text between '{' and '}' is repeated for each argument; "$n"
+(dollar sign, small 'n') is replaced by the argument value.
+
+<P>To use multi-word arguments, enclose them in quotes.
+
+<P>When a macro refers to a variable using $(xxx), this will be
+expanded as soon as the macro is expanded.  Usually this is what
+you expect, but sometimes you need the variable to be expanded in
+the <I>next</I> pass, for instance if you generate the .define
+in the same pass.  In this case, escape the variable: $\(xxx).
+
+<P>The file macro.def that comes with htmlpp defines a set of
+standard macros.  You can define multiline macros that include
+other commands, like .if and .include.
+
+<H3><A NAME="TOC16">Support For Accented Characters</A></H3>
+
+<P>You can type accented characters directly, and htmlpp will do
+its best to convert these into HTML metacharacters.  For instance,
+if your document contains an e-circumflex, htmlpp will replace it
+by the metacharacter &amp;ecirc;.
+
+<P>This function works within certain limitations only.  Firstly,
+your document will become non-portable: if you move it from a UNIX
+to a DOS box, the accents will get messed-up, unless your file
+transfer software can handle accents too.  Secondly, htmlpp uses
+a look-up table based on the ASCII value for each accented character
+it knows about.  These tables are system-specific, so htmlpp does a
+little testing of the wind to figure-out if it's running under a
+Unix or a DOS system.  if you use htmlpp on a Mac, or on documents
+encoded using another character set -- e.g. Windows -- it won't
+work.  Basically htmlpp handles MS-DOS accents if there is an
+environment variable 'COMPSPEC' defined, and Unix Latin-1 (aka.
+ISO-8859-1) accents if there is a file called "/etc/passwd" on the
+system.  Under Windows you should save documents as 'DOS text'.
+
+<P>Oh, one more thing.  Htmlpp does not try to handle every single
+accented character, just the ones that I could find the HTML codes
+for, and the Unix and DOS values for.  If you find that the accents
+you use come-out as '?' (not found), just send me the HTML metachar
+for the accented character, plus the octal ASCII codes for Unix and
+MS-DOS.  (Well, whatever you can get together would be nice too.)
+
+<A NAME="guru">&nbsp;</A>
+<H3><A NAME="TOC17">Htmlpp Guru Mode</A></H3>
+
+<P>Recognising that a True Guru does not have time to painfully
+mark-up large HTML documents, htmlpp includes a basic text-to-HTML
+converter.  You can invoke this as a preprocessing phase to the
+normal htmlpp process.  Right now, this is an either-or choice; you
+either use htmlpp commands in a HTML document, or a text document
+and guru mode, but not a mixture of the two modes.  (Release 3.1 of
+htmlpp tried to make this work, but that did not last long :\ )
+
+<P>You can, usefully, use htmlpp's guru mode to mark-up a document,
+then fine-tune it by hand.
+
+<P>To use guru mode, run htmlpp with the '-guru' option:
+<PRE>htmlpp -guru <I>filename</I>
+</PRE>
+
+<P>Guru mode works by recognising layout, and converting this to HTML.
+I've tried to keep a balance between features and complexity, to give
+you something useful without becoming too formal (which is what HTML
+is for).  Basically, guru mode relies on layout rules that also help
+to make the text readable in any case.  For example, blank lines and
+indentation are significant in most places.  One consequence of this
+is that the plain text file is very readable even before it is HTML'd
+(assuming you do your bit.)
+
+<P>In guru mode, htmlpp reads an input text file (with any name and
+extension except '.hpp') and creates an output file with the same name
+and the extension '.hpp'.   It then processes this file as it would
+any normal input file.  The '.hpp' file remains afterwards, so you can
+use it as the basis for further refinement if wanted.  (You should
+call it something else, to avoid embarrasing mistakes.)
+
+<H4><A NAME="TOC18">Standard Guru Mode Definitions</A></H4>
+
+<P>The file 'guru.def' is always inserted at the start of the
+newly-created file.  You can modify this file as wanted, to tune the
+results of guru mode.  You cannot choose another name for this file
+other than by changing htmlpp's source code, which I don't recommend.
+
+<P>Htmlpp looks for a file called 'guru.fmt' which may exist and which
+may redefine the various HTML tags it uses.  A file 'guru_opt.fmt' is
+supplied in the htmlpp distribution; rename or copy this to 'guru.fmt'
+and change any values you want to (I'd suggest you remove anything that
+does not change, just to make things clear).  I've made it work in
+this way so that if you reinstall htmlpp, you don't loose your work.
+
+<H4><A NAME="TOC19">Chapter and Section Headers</A></H4>
+<P>Htmlpp handles three levels of headers, H1, H2, and H3.  In the text
+these look like this:
+<PRE>Chapter Header
+**************
+
+Section Header
+==============
+
+Subsection Header
+-----------------
+</PRE>
+
+<P>The line following the header text must start with 3 or more
+asterisks, equals, or hyphens.  There is no way to specify H4 or
+other headers.  I recommend that you start the document with a
+chapter header.
+
+<P>You can also request a horizontal rule (&lt;HR&gt;) by putting
+four or more dots on a line by themselves:
+<PRE>....
+</PRE>
+
+<P>The header text line must come after a blank line, or at the start
+of the document.
+
+<H4><A NAME="TOC20">Table of Contents</A></H4>
+<P>If your document contains at least two chapters, htmlpp will
+insert a table of contents before the second chapter header.  This
+works best if the first chapter is empty or contains a brief text
+to introduce the document.  Htmlpp inserts the table of contents
+by adding a section header called 'Table of Contents', and then
+a line '.include contents.def', in the normal manner.  You should
+not call the first chapter 'Table of Contents'.
+
+<H4><A NAME="TOC21">Pagination</A></H4>
+<P>Htmlpp inserts a '.page' command before each chapter header.
+Therefore, use chapter headers wisely to break the document into
+usable pages.
+
+<H4><A NAME="TOC22">Page Headers and Footers</A></H4>
+<P>The guru.def file normally includes 'prelude.def', which defines
+page headers and footers for the document.  You will normally tune
+these for any project -- the supplied files contain references to
+iMatix URLs that may not be appropriate for your work.  I like to
+use the same headers and footers (the same prelude.def) for all the
+files in a project, including those I that use guru mode.
+
+<H4><A NAME="TOC23">Paragraphs</A></H4>
+<P>A paragraph is anything following a blank line that does not
+look like something else.  Basically, any plain text following a
+blank line is given a &lt;P&gt; tag.  Note however the exceptions
+that follow...
+
+<H4><A NAME="TOC24">Preformatted Text</A></H4>
+<P>If a line is indented by 4 or more spaces, or a tab, htmlpp
+treats the line as 'preformatted' text and inserts a &lt;PRE&gt;
+tag.  You can mix blank lines with preformatted text.
+
+<H4><A NAME="TOC25">Bulleted and Numbered Lists</A></H4>
+<P>A paragraph starting with a hyphen and a space is considered to
+be a bulleted list item.  A paragraph starting with a digit and a
+dot and optionally a space is considered to be a numbered list item.
+You can put blank lines between list items, but it's not necessary.
+Cosmetically, when list items are short, blank lines are disturbing.
+But when list items are several lines, blank lines make the text
+more readable.  Either way, htmlpp is happy.
+
+<H4><A NAME="TOC26">Definition Lists</A></H4>
+<P>A definition list is a line ending in ':' followed by some lines
+indented by one or more spaces.  For example:
+<PRE>Definition:
+ Explanation of definition.
+</PRE>
+<P>You can put blank lines between definition items, but again, it's
+a matter of cosmetics.  There should be a blank line before the first
+definition item, however.
+
+<H4><A NAME="TOC27">Tables</A></H4>
+<P>Tables are one of the real pains of HTML markup, in my opinion.
+Here htmlpp tries to solve the most common case; a two-column table
+consisting of a term or value in one column, and an explanation in
+the second column.
+
+<P>A table can start with a header, which is a line like this:
+<PRE>Some column:  Followed by some explanation:
+</PRE>
+
+<P>Here, the colons (':') are important.  Htmlpp also wants a captial
+letter at the start of both phrases, and a space after the first colon.
+The table header is optional; you can start immediately with table
+items.  Either way, htmlpp needs a blank line before the table.  A
+table item looks like this:
+<PRE>Some_word:    Followed by some explanation
+               which can come on several lines.
+</PRE>
+
+<P>The first column must be a single word - if you want several words,
+use underlines.  Htmlpp replaces these by spaces.  The explanation can
+come on several lines, which <EM>must</EM> be indented by one or more
+spaces.
+
+<H4><A NAME="TOC28">Figures and Images</A></H4>
+<P>To insert a figure, use one of these conventions:
+<PRE>[Figure <EM>filename</EM>: caption]
+[Figure "<EM>filename</EM>": caption]
+</PRE>
+
+<P>Htmlpp inserts a figure caption, numbering the figures in a document
+from 1 upwards.  The caption is followed by an <IMG> tag to display the
+file.  You can use a URI (a path) as the filename, or an URL (with a
+host name specifier); you must put an URL in quotes.  My preference is
+to put image files locally with the HTML files, and use a simple
+filename without a path.  This is just easier to manage and lets you
+put the HTML files plus images in any directory.  If htmlpp can find
+the image you specify, and it's a .GIF or .JPG file, it will insert
+the WIDTH= and HEIGHT= tags automatically.
+
+<P>To insert a plain image, omit the 'Figure' keyword.  For example,
+these are all examples of valid images:
+<PRE>[Figure somefile.gif: caption]
+[somefile.gif: caption]
+[Figure somefile.gif]
+[somefile.gif]
+</PRE>
+
+<H4><A NAME="TOC29">Hyperlinks</A></H4>
+
+<P>If you use &lt;name@address&gt;, this is converted into a mailto:
+URL hyperlink.  If you use &lt;http://address/document&gt; -- or any
+other URL -- this is converted into a hyperlink as well.
+
+<P>Htmlpp does not presently allow links within the document or to
+other documents.
+
+<H4><A NAME="TOC30">Special Characters</A></H4>
+
+<P>Since you're not typing HTML, htmlpp replaces &lt;, &gt; and &amp;
+by HTML metacharacters.  &lt; and &gt; are used to indicate hyperlinks.
+
+<A NAME="intrinsic">&nbsp;</A>
+<H3><A NAME="TOC31">Htmlpp Intrinsic Functions</A></H3>
+
+<P>Htmlpp provides a number of intrinsic functions that you can
+use in your text.  The syntax for using an intrinsic function is:
+<PRE>&function-name(arguments)</PRE>
+
+<TABLE>
+<TR><TH>This function:              <TH>Does this:
+<TR><TD>&date("picture", date)     <TD>Format specified date using picture
+<TR><TD>&date("picture", date, lc) <TD>Format specified date using picture
+and language code.
+<TR><TD>&date("picture")           <TD>Format current date using picture
+<TR><TD>&date()                    <TD>Return current date value
+<TR><TD>&time()                    <TD>Format current time as hh:mm:ss
+<TR><TD>&week_day([date])          <TD>Get day of week, 0=Sunday to 6=Saturday
+<TR><TD>&year_week([date])         <TD>Get week of year, 1 is first full week
+<TR><TD>&julian_date([date])       <TD>Get Julian date for date
+<TR><TD>&lillian_date([date])      <TD>Get Lillian date for date
+<TR><TD>&date_to_days(date)        <TD>Convert yyyymmdd to Lillian date
+<TR><TD>&days_to_date(days)        <TD>Convert Lillian date to yyyymmdd
+<TR><TD>&future_date(days,[date])  <TD>Calculate future date
+<TR><TD>&past_date(days,[date])    <TD>Calculate past date
+<TR><TD>&date_diff(date1,date2)    <TD>Calculate differences between dates
+<TR><TD>&image_height("image.ext") <TD>Get image height (GIF, JPEG)
+<TR><TD>&image_width("image.ext")  <TD>Get image width (GIF, JPEG)
+<TR><TD>&file_size("filename",arg) <TD>Get size of file: optional arg K or M
+<TR><TD>&file_date("filename")     <TD>Get date of file
+<TR><TD>&file_time("filename")     <TD>Get time of file as hh:mm:ss
+<TR><TD>&normalise("filename")     <TD>Normalise filename to UNIX format
+<TR><TD>&system("command")         <TD>Get result of some system utility
+<TR><TD>&upper("string")           <TD>Convert string to uppercase text
+<TR><TD>&lower("string")           <TD>Convert string to lowercase text
+</TABLE>
+
+<H4><A NAME="TOC32">The &date Function</A></H4>
+<P>Syntax:
+<PRE>&date(<I>picture</I>, <I>value</I>)
+&date(<I>picture</I>, <I>value</I>, </I>language</I>)
+&date(<I>picture</I>)
+&date()
+</PRE>
+
+<P>Without a picture, returns the current date. With a picture, formats the
+current date according to a picture that you specify. You can optionally
+supply a date value in the standard 8-digit format; YYYYMMDD (as returned by
+&date()), or use 0 to indicate today's date. You can optionally follow the
+picture and value by a language code; the values currently accepted are "ES"
+for Spanish. Anything else is taken to mean English. The picture can consist
+of any mixture of these elements:
+<DL>
+<DT>cc   <DD>century 2 digits, 01-99
+<DT>y    <DD>day of year, 1-366
+<DT>yy   <DD>year 2 digits, 00-99
+<DT>yyyy <DD>year 4 digits, 100-9999
+<DT>m    <DD>month, 1-12
+<DT>mm   <DD>month, 01-12
+<DT>mmm  <DD>month, 3 letters
+<DT>mmmm <DD>month, full name
+<DT>MMM  <DD>month, 3 letters, ucase
+<DT>MMMM <DD>month, full name, ucase
+<DT>d    <DD>day, 1-31
+<DT>dd   <DD>day, 01-31
+<DT>ddd  <DD>day of week, Sun-Sat
+<DT>dddd <DD>day of week, Sunday-Saturday
+<DT>DDD  <DD>day of week, SUN-SAT
+<DT>DDDD <DD>day of week, SUNDAY-SATURDAY
+<DT>w    <DD>day of week, 1-7 (1=Sunday)
+<DT>ww   <DD>week of year, 1-53
+<DT>q    <DD>year quarter, 1-4
+<DT>\x   <DD>literal character x
+<DT>other<DD>literal character
+</DL>
+
+<P>Examples:
+<PRE>
+.echo &date()             --> Nov 13, 99
+.echo &date('mm d, yy')   --> Dec 2, 98
+.echo &date('d mmm, yy')  --> 2 Dec, 98
+.echo &date("yymd")       --> 9812 2
+.echo &date("yyyymmdd")   --> 19981202
+.echo &date("d \de mmmm \de yyyy", 0, "ES")  --> today's date in Spanish
+</PRE>
+
+<H4><A NAME="TOC33">The &time Function</A></H4>
+<P>Syntax:
+<PRE>&time()
+</PRE>
+<P>Formats the current time in the same way as the $(TIME) symbol.
+The difference is that $(TIME) is set when htmlpp starts working;
+&time() reflects the current time.
+
+<H4><A NAME="TOC34">The &week_day Function</A></H4>
+<P>Syntax:
+<PRE>&week_day()
+&week_day(<I>date</I>)
+</PRE>
+<P>Returns the day of the week for the specified date, or for the current
+date if no argument is given.  Day 0 is Sunday; day 6 is Saturday.
+
+<H4><A NAME="TOC35">The &year_week Function</A></H4>
+<P>Syntax:
+<PRE>&year_week()
+&year_week(<I>date</I>)
+</PRE>
+<P>Returns the week of the year for the specified date, or for the current
+date if no argument is given.  Week 1 is the first full week, starting with
+a Sunday.
+
+<H4><A NAME="TOC36">The &julian_date Function</A></H4>
+<P>Syntax:
+<PRE>&julian_date()
+&julian_date(<I>date</I>)
+</PRE>
+<P>Returns the Julian date for the specified date, or for the current
+date if no argument is given.  Day 1 is January 1.
+
+<H4><A NAME="TOC37">The &lillian_date Function</A></H4>
+<P>Syntax:
+<PRE>&lillian_date()
+&lillian_date(<I>date</I>)
+</PRE>
+<P>Returns the Lillian date for the specified date, or for the current
+date if no argument is given.  This is the number of days since a starting
+(but unspecified) epoch (which in fact is around 1582).
+
+<H4><A NAME="TOC38">The &date_to_days Function</A></H4>
+<P>Syntax:
+<PRE>&date_to_days(<I>date</I>)
+</PRE>
+<P>Returns the Lillian date for the specified date.  This function is
+really a the same as &lillian_date() except that you must supply a
+date argument.  It's provided for orthogonality with &days_to_date().
+
+<H4><A NAME="TOC39">The &days_to_date Function</A></H4>
+<P>Syntax:
+<PRE>&days_to_date(<I>days</I>)
+</PRE>
+<P>Converts a Lillian date back into a normal date in the form
+yyyymmdd.  You can use this function (in combination with the
+reverse function, &date_to_days()) to calculate past and future
+dates.
+
+<H4><A NAME="TOC40">The &future_date Function</A></H4>
+<P>Syntax:
+<PRE>&future_date(<I>days</I>)
+&future_date(<I>days</I>,<I>date</I>)
+</PRE>
+<P>Calculates a date at some point in the future.  For instance,
+19980708 will produce tomorrow's date.  If the date argument is
+not provided, calculates from today.
+
+<H4><A NAME="TOC41">The &past_date Function</A></H4>
+<P>Syntax:
+<PRE>&past_date(<I>days</I>)
+&past_date(<I>days</I>,<I>date</I>)
+</PRE>
+<P>Calculates a date at some point in the past.  For instance,
+19980706 will produce yesterday's date.  If the date argument is
+not provided, calculates from today.
+
+<H4><A NAME="TOC42">The &date_diff Function</A></H4>
+<P>Syntax:
+<PRE>&date_diff(<I>date</I>)
+&date_diff(<I>date1</I>,<I>date2</I>)
+</PRE>
+<P>Calculates the difference between two dates, in days.  The calculation is
+date1 - date2.  If date2 is not supplied, calculates using today, and will
+therefore return a positive value if date is in the future, and a negative
+value if date is in the past.
+
+<H4><A NAME="TOC43">The &image_width Function</A></H4>
+<P>Syntax:
+<PRE>&image_width(<I>filename</I>)
+</PRE>
+<P>Returns the width of the specified image, which can be a GIF or
+JPEG file, in any of the common formats (including progressive
+encoding).  The width is returned in pixels.
+
+<H4><A NAME="TOC44">The &image_height Function</A></H4>
+<P>Syntax:
+<PRE>&image_height(<I>filename</I>)
+</PRE>
+<P>Returns the height of the specified image, which can be a GIF or
+JPEG file, in any of the common formats (including progressive
+encoding).  The height is returned in pixels.
+
+<H4><A NAME="TOC45">The &file_size Function</A></H4>
+<P>Syntax:
+<PRE>&file_size(<I>filename</I>)
+&file_size(<I>filename</I>, K)
+&file_size(<I>filename</I>, M)
+</PRE>
+<P>Returns the size of the specified file.  If the second argument is
+K or M, calculates the size in Kb or Mb as appropriate.  Always returns
+an integer value.
+
+<H4><A NAME="TOC46">The &file_date Function</A></H4>
+<P>Syntax:
+<PRE>&file_date(<I>filename</I>)
+</PRE>
+<P>Returns the date of the specified file, as an 8-digit value, YYYYMMDD.
+
+<H4><A NAME="TOC47">The &file_time Function</A></H4>
+<P>Syntax:
+<PRE>&file_time(<I>filename</I>)
+</PRE>
+<P>Returns the time of the specified file, as a string, HH:MM:SS.
+
+<H4><A NAME="TOC48">The &normalise Function</A></H4>
+<P>Syntax:
+<PRE>&normalise(<I>filepath</I>)
+</PRE>
+<P>Returns the filepath in a UNIX-style format. You can use this, for
+instance, under MS-DOS, when filenames taken from (e.g.) the environment
+contain back slashes which can cause problems.  Replaces \ by / and
+spaces by underlines.
+
+<H4><A NAME="TOC49">The &system Function</A></H4>
+<P>Syntax:
+<PRE>&system(<I>string</I>)
+</PRE>
+<P>Returns the result of some system utility.  For instance:
+<PRE>.define SERVER  http://&system("hostname")
+</PRE>
+
+<H4><A NAME="TOC50">The &upper Function</A></H4>
+<P>Syntax:
+<PRE>&upper(<I>string</I>)
+</PRE>
+<P>Returns the string in uppercase letters.
+
+<H4><A NAME="TOC51">The &lower Function</A></H4>
+<P>Syntax:
+<PRE>&lower(<I>string</I>)
+</PRE>
+<P>Returns the string in lowercase letters.
+
+<H3><A NAME="TOC52">Multipass Processing</A></H3>
+
+<P>Since version 2.00, htmlpp uses a multipass technique to allow
+embedded blocks.  For example, you can place .include actions in
+the header or footer blocks, or define your own blocks that have
+.define, .page, and other actions.
+
+<P>Htmlpp handles this using the following rules:
+<OL>
+<LI>.include actions are executed immediately.
+<LI>.block actions are executed immediately.
+<LI>.build actions are executed as soon as possible after the
+first pass.  This allows htmlpp time to collect the document
+titles, which it needs to build the table of contents.
+<LI>.if ... .else ... .endif actions are handled at once.
+<LI>.page commands are handled in two stages; headers and
+footers are built in the second pass, and individual page
+files are built during the last pass.
+<LI>Htmlpp will process the document (actually a temporary copy)
+as many times as necessary, until all actions have been processed.
+</OL>
+<P>One consequence of this is that htmlpp needs a minimum of 3
+passes to fully process a document, one to collect all the titles;
+one to insert page headers and footers, and a last one to break the
+text into individual pages.  If any genius can help me reduce this
+to two (or one!) pass, go ahead.
+
+<P>The upside is that you can do really funky stuff in headers
+and footers: for instance, the htmlpp pages build a document
+index in the footer, switching hyperlinks on and off to indicate
+the current page in the index.
+
+<H3><A NAME="TOC53">Multipass Debugging</A></H3>
+
+<P>To see what htmlpp is doing with its passes, use the -debug
+switch, like this:
+<PRE>htmlpp -debug <EM>filename</EM></PRE>
+This leaves a number of .wrk files lying around; these contain
+the result of each pass.
+
+<H3><A NAME="TOC54">Other Things to Know</A></H3>
+
+<UL>
+<LI>If you end a line with '\', it will be output to the final HTML file
+without a trailing newline (and without the '\').
+</UL>
+
+<HR><TABLE WIDTH=100%><TR><TD ALIGN=LEFT WIDTH=60%>
+ | <A HREF="index.htm">&lt;&lt;</A> | <A HREF="index2.htm">&lt;</A>
+ | <A HREF="index4.htm">&gt;</A> | <A HREF="index5.htm">&gt;&gt;</A>
+<BR><FONT SIZE=2>
+| <A HREF="index.htm">htmlpp - The HTML Preprocessor</A>
+| <A HREF="index1.htm">Installing Htmlpp</A>
+| <A HREF="index2.htm">Getting Started</A>
+| <EM>Htmlpp Reference</EM>
+| <A HREF="index4.htm">Frequently Asked Questions</A>
+| <A HREF="index5.htm">Other Information</A>
+<TD ALIGN=RIGHT NOWRAP>
+<A HREF="/index.htm">
+<IMG SRC="im0096c.gif" WIDTH=96 HEIGHT=36 ALT="iMatix" BORDER=0>
+</A>
+<BR><FONT SIZE=2>Copyright &#169; 1996-97 iMatix</TABLE>
+</BODY></HTML>
