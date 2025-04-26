@@ -26,14 +26,17 @@
 #include "lrpriv.h"                                        /*  Private definitions              */
 
 /*-----------------------------.
- |  lr_free_memory
+ |  lr_free_memory	       |
  |-----------------------------`---------------------------------------------.
- |  int lr_free_memory (lrnode *head, lrstat *stats);
- |
- |  Description:
- |  Returns: 0 if okay, -1 if errors were found.
- |  Comments:
- |
+ |  int lr_free_memory (lrnode *head, lrstat *stats);			     |
+ |									     |
+ |  Description:							     |
+ |									     |
+ |									     |
+ |  Returns: 0 if okay, -1 if errors were found.			     |
+ |									     |
+ |  Comments:								     |
+ |									     |
  `---------------------------------------------------------------------------*/
 
 int lr_free_memory(
@@ -56,12 +59,9 @@ int lr_free_memory(
     free(stats->source);                                   /*    and source file name       */
 
     state = listhead->child;                               /*  Free main states list        */
-
-    while (state) {
+    while (state)
         state = DeleteState(listhead, state);
-    }
 
     free(listhead->name);                                  /*  Free symbol table            */
-
     return (feedback);
 }

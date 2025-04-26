@@ -1003,9 +1003,11 @@ TIME_T *TimeNow (void)
 
     time_secs   = time (NULL);
     time_struct = localtime (&time_secs);
+
     time_now.hh = time_struct-> tm_hour;
     time_now.mm = time_struct-> tm_min;
     time_now.ss = time_struct-> tm_sec;
+
     return (&time_now);
 }
 
@@ -1042,11 +1044,13 @@ int LeapYear (int year)
     Bool leap;
 
     leap = FALSE;
-    if (year % 4 == 0)
+
+    if (year % 4 == 0) {
         leap = TRUE;
-        if ((year % 100 == 0)
-        &&  (year % 400 != 0))
+        if ((year % 100 == 0)        &&  (year % 400 != 0)) {
             leap = FALSE;
+        }
+    }
 
     return (leap);
 }
