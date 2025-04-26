@@ -178,13 +178,17 @@ void sym_delete_table(
 
     ASSERT(tabp != NULL);
     next = 0;
+
     for (sp = tabp->syms; sp; sp = next) {
         next = sp->next;
+
         ASSERT(sp != NULL);
-        if (sp->svalue)
+        if (sp->svalue) {
             free(sp->svalue);
+        }
         free(sp);
     }
+
     free(tabp);
 }
 
@@ -197,7 +201,9 @@ static int compute_hash(
 {
     int hashvalue;
 
-    for (hashvalue = 0; *name != '\0'; hashvalue += *name++);
+    for (hashvalue = 0; *name != '\0'; hashvalue += *name++) {
+        ;
+    }
     return (hashvalue & (SYM_HASH_SIZE - 1));
 }
 
@@ -214,9 +220,11 @@ static symbol *lookup_entry(
     symbol *sp;
 
     ASSERT(tabp != NULL);
-    for (sp = tabp->hash[hashvalue]; sp; sp = sp->h_next)
-        if (streq(sp->name, s))
+    for (sp = tabp->hash[hashvalue]; sp; sp = sp->h_next) {
+        if (streq(sp->name, s)) {
             return (sp);
+        }
+    }
 
     return (NULL);
 }
@@ -227,6 +235,7 @@ symbol *sym_lookup(
 )
 {
     ASSERT(tabp != NULL);
+
     return (lookup_entry(tabp, s, compute_hash(s)));
 }
 
@@ -243,6 +252,7 @@ static symbol *create_entry(
     symbol *sp;
 
     ASSERT(tabp != NULL);
+
     sp = (symbol *) Check(malloc(sizeof(*sp) + strlen(s) + 1));
     sp->name = (char *) sp + sizeof(*sp);
     strcpy(sp->name, s);
@@ -250,6 +260,7 @@ static symbol *create_entry(
     sp->type = (byte) type;                                /*  Set symbol type          */
     sp->flags = 0;                                         /*  Reset all flags          */
     sp->hash_value = (byte) hashvalue;
+
 #ifdef DEBUG
     sp->signature = SYM_SIGNATURE;
 #endif
@@ -257,16 +268,19 @@ static symbol *create_entry(
     /* confuse the hell out of everybody by setting lots of pointers */
     sp->next = tabp->syms;
     sp->h_next = tabp->hash[hashvalue];
+
     sp->prev = NULL;
     sp->h_prev = NULL;
     sp->ivalue = 0;
     sp->svalue = NULL;
 
-    if (tabp->syms)
+    if (tabp->syms) {
         tabp->syms->prev = sp;
+    }
 
-    if (tabp->hash[hashvalue])
+    if (tabp->hash[hashvalue]) {
         tabp->hash[hashvalue]->h_prev = sp;
+    }
 
     tabp->syms = sp;
     tabp->hash[hashvalue] = sp;
@@ -297,11 +311,12 @@ symbol *sym_intern(
     int hashvalue;
 
     ASSERT(tabp != NULL);
+
     hashvalue = compute_hash(s);
     sp = lookup_entry(tabp, s, hashvalue);
-    if (sp == NULL)
+    if (sp == NULL) {
         return (create_entry(tabp, s, type, hashvalue));
-
+    }
     return (sp);
 }
 
@@ -321,32 +336,40 @@ symbol *sym_delete(
 
     /*  find a symbol with the same name, or NULL if none found          */
     orig = sp;
-    for (sp = sp->h_next; sp; sp = sp->h_next)
-        if (streq(sp->name, orig->name))
+    for (sp = sp->h_next; sp; sp = sp->h_next) {
+        if (streq(sp->name, orig->name)) {
             break;
 
+        }
+    }
+
     /*  fix up the pointers and remove the original symbol           */
-    if (orig->prev)
+    if (orig->prev) {
         orig->prev->next = orig->next;
-    else
+    } else {
         tabp->syms = orig->next;
+    }
 
-    if (orig->h_prev)
+    if (orig->h_prev) {
         orig->h_prev->h_next = orig->h_next;
-    else
+    } else {
         tabp->hash[orig->hash_value] = orig->h_next;
+    }
 
-    if (orig->next)
+    if (orig->next) {
         orig->next->prev = orig->prev;
+    }
 
-    if (orig->h_next)
+    if (orig->h_next) {
         orig->h_next->h_prev = orig->h_prev;
+    }
 
     tabp->size--;
 
     ASSERT(orig != NULL);
-    if (orig->svalue)
+    if (orig->svalue) {
         free(orig->svalue);
+    }
 
     free(orig);
     return (sp);
@@ -361,8 +384,9 @@ void sym_values(
     ASSERT(sp != NULL);
     ASSERT_SYM(sp);
 
-    if (sp->svalue)
+    if (sp->svalue) {
         free(sp->svalue);
+    }
     sp->svalue = StrDup((char *) svalue);
     sp->ivalue = ivalue;
 }
@@ -382,9 +406,13 @@ void sym_exec_all(
     va_list argptr;                                        /*  Argument list pointer        */
 
     ASSERT(tabp != NULL);
+
     va_start(argptr, the_function);                        /*  Start variable args processing   */
-    for (sp = tabp->syms; sp; sp = sp->next)
-        if (!(*the_function) (sp, argptr))
+    for (sp = tabp->syms; sp; sp = sp->next) {
+        if (!(*the_function) (sp, argptr)) {
             break;
+        }
+    }
+
     va_end(argptr);                                        /*  End variable args processing     */
 }

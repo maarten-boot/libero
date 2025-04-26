@@ -224,20 +224,20 @@ static void get_relator_token(
     token[token_len] = 0;                                  /*  Terminate token string           */
 
     if (streq(token, "=")                                  /*  Encode relator                   */
-        ||streq(token, "=="))  {                            /*    and signal error               */
+        ||streq(token, "==")) {                            /*    and signal error               */
         relator = OP_EQ;                                   /*    if not valid                   */
     } else if (streq(token, "!=")
-             || streq(token, "<>")) {
+               || streq(token, "<>")) {
         relator = OP_NE;
     } else if (streq(token, "<")) {
         relator = OP_LT;
-    } else if (streq(token, "<=")){
+    } else if (streq(token, "<=")) {
         relator = OP_LE;
-    } else if (streq(token, ">")){
+    } else if (streq(token, ">")) {
         relator = OP_GT;
-    } else if (streq(token, ">=")){
+    } else if (streq(token, ">=")) {
         relator = OP_GE;
-    } else{
+    } else {
         signal_error(MSG_EVAL_INV_RELATOR);
     }
 }
@@ -250,8 +250,8 @@ static void get_string_token(
      thisch;                                               /*  Current character                */
 
     delim = condition[column++];                           /*  Get delimiter character          */
-    for(;;)                                                /*  Loop until string is complete    */
-    {                                                      /*    or end of line                 */
+    for (;;) {                                             /*  Loop until string is complete    */
+        /*    or end of line                 */
         thisch = condition[column++];
 
         if (thisch == 0) {
@@ -261,7 +261,7 @@ static void get_string_token(
         } else if (thisch == delim) {
             break;
 
-        } else if (thisch == '\\') {                         /*  Handle escaped character         */
+        } else if (thisch == '\\') {                       /*  Handle escaped character         */
             thisch = condition[column++];
 
             if (thisch == 'n') {
@@ -549,16 +549,16 @@ MODULE evaluate_numeric_comparison(
         token_posn = lposn + offset;                       /*  Point to error in left expr      */
     } else {
         feedback = lr_calculate(rexpr, &rvalue, &offset);
-        if (feedback)    {
-                                              /*  Point to error in right expr     */
+        if (feedback) {
+            /*  Point to error in right expr     */
             token_posn = rposn + offset;
         }
     }
 
-    if (feedback)         {
-                                         /*  If error in expr, signal it      */
+    if (feedback) {
+        /*  If error in expr, signal it      */
         signal_error(feedback);
-    } else {                                                   /*  Else make comparison             */
+    } else {                                               /*  Else make comparison             */
         switch (relator) {
 
         case OP_EQ:
@@ -711,11 +711,11 @@ MODULE terminate_the_program(
 )
 {
     the_next_event = terminate_event;
-    if (feedback)    {
-                                              /*  If error, return position of     */
+    if (feedback) {
+        /*  If error, return position of     */
         *offset = token_posn;                              /*    error in expression line       */
     } else if (invert) {
-                                               /*  Else invert result if needed     */
+        /*  Else invert result if needed     */
         *result = !*result;
     }
 }
